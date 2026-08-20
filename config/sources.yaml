@@ -1,3 +1,253 @@
 version: 1
 
-groups: {}
+
+# ============================================================
+# 全局默认设置
+# ============================================================
+
+defaults:
+
+  # 最终输出模式：
+  #
+  # strict:
+  #   只输出核心 classical 类型：
+  #   DOMAIN
+  #   DOMAIN-SUFFIX
+  #   DOMAIN-KEYWORD
+  #   IP-CIDR
+  #   IP-CIDR6
+  #
+  # extended:
+  #   尽量保留编译器已支持的扩展类型。
+  output_mode: strict
+
+
+  # 优化模式：
+  #
+  # safe:
+  #   只删除完全重复；
+  #   DOMAIN/CIDR 覆盖关系只报告，不删除。
+  #
+  # aggressive:
+  #   允许删除明确被更宽规则覆盖的规则。
+  optimize_mode: safe
+
+
+  # 最终规则是否排序。
+  # 建议开启，方便 Git diff。
+  sort_output: true
+
+
+  # 下载超时，单位秒。
+  timeout: 30
+
+
+  # 单个上游失败后是否继续构建其它源。
+  #
+  # true:
+  #   一个源挂了，继续处理其它源；
+  #   报告中记录失败。
+  #
+  # false:
+  #   任一源失败就终止整个组。
+  continue_on_source_error: true
+
+
+# ============================================================
+# 规则组
+#
+# 每一个 group 最终生成一个 rules/*.yaml
+# 和一个 reports/*.json
+# ============================================================
+
+groups:
+
+
+  # ----------------------------------------------------------
+  # 测试组
+  #
+  # 先保留，用来验证整个多源构建流程。
+  # 后面正式运行后可以删除。
+  # ----------------------------------------------------------
+
+  Test:
+
+    enabled: true
+
+    output: rules/Test.yaml
+
+    report: reports/Test.json
+
+    sources:
+
+      - name: test-local-area-network
+
+        enabled: true
+
+        url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/LocalAreaNetwork.yaml
+
+        # auto = 自动检测
+        format: auto
+
+
+  # ----------------------------------------------------------
+  # LAN / 局域网
+  # ----------------------------------------------------------
+
+  LAN:
+
+    enabled: false
+
+    output: rules/LAN.yaml
+
+    report: reports/LAN.json
+
+    sources:
+
+      - name: ACL4SSR-LocalAreaNetwork
+
+        enabled: true
+
+        url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/LocalAreaNetwork.yaml
+
+        format: auto
+
+
+  # ----------------------------------------------------------
+  # AI
+  #
+  # 这里只先搭结构。
+  # 等我们正式挑完上游后再打开。
+  # ----------------------------------------------------------
+
+  AI:
+
+    enabled: false
+
+    output: rules/AI.yaml
+
+    report: reports/AI.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # Google
+  # ----------------------------------------------------------
+
+  Google:
+
+    enabled: false
+
+    output: rules/Google.yaml
+
+    report: reports/Google.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # Apple
+  # ----------------------------------------------------------
+
+  Apple:
+
+    enabled: false
+
+    output: rules/Apple.yaml
+
+    report: reports/Apple.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # Microsoft
+  # ----------------------------------------------------------
+
+  Microsoft:
+
+    enabled: false
+
+    output: rules/Microsoft.yaml
+
+    report: reports/Microsoft.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # Telegram
+  # ----------------------------------------------------------
+
+  Telegram:
+
+    enabled: false
+
+    output: rules/Telegram.yaml
+
+    report: reports/Telegram.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # 流媒体
+  # ----------------------------------------------------------
+
+  Streaming:
+
+    enabled: false
+
+    output: rules/Streaming.yaml
+
+    report: reports/Streaming.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # 游戏
+  # ----------------------------------------------------------
+
+  Games:
+
+    enabled: false
+
+    output: rules/Games.yaml
+
+    report: reports/Games.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # 国内 / 直连
+  # ----------------------------------------------------------
+
+  Direct:
+
+    enabled: false
+
+    output: rules/Direct.yaml
+
+    report: reports/Direct.json
+
+    sources: []
+
+
+  # ----------------------------------------------------------
+  # 自定义补丁
+  #
+  # 以后可以放你自己的规则文件。
+  # ----------------------------------------------------------
+
+  Fix:
+
+    enabled: false
+
+    output: rules/Fix.yaml
+
+    report: reports/Fix.json
+
+    sources: []
