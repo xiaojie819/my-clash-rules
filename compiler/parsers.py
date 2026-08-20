@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import ipaddress
 import re
-from collections.abc import Iterable
 
 from .detect import (
     COMMENT_PREFIXES,
     detect_format,
-    iter_meaningful_lines,
     looks_like_cidr,
     looks_like_classical_rule,
     looks_like_domain,
@@ -23,7 +21,6 @@ from .models import (
     RuleType,
     SourceFormat,
 )
-
 
 # ============================================================
 # 规则类型映射
@@ -150,10 +147,12 @@ def _normalize_domain_provider_value(value: str) -> tuple[RuleType, str]:
     """
     value = strip_quotes(value.strip())
 
-    if value.startswith("+."):
-        value = value[2:]
-
-    elif value.startswith("*."):
+    if value.startswith(
+        (
+            "+.",
+            "*.",
+        )
+    ):
         value = value[2:]
 
     return RuleType.DOMAIN_SUFFIX, value
@@ -604,7 +603,7 @@ def parse_clash_ipcidr(
     return result
 
 
-def parse_sur​​ge_like(
+def parse_surge_link(
     text: str,
     *,
     source: RuleSource | None = None,
@@ -957,7 +956,7 @@ def parse_rules(
         SourceFormat.LOON,
         SourceFormat.QUANTUMULT_X,
     }:
-        return parse_sur​​ge_like(
+        return parse_surge_link(
             text,
             source=source,
             detected_format=detected_format,

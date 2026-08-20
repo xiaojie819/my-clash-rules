@@ -70,13 +70,13 @@ groups:
   # 后面正式运行后可以删除。
   # ----------------------------------------------------------
 
-  Test:
+  LAN:
 
     enabled: true
 
-    output: rules/Test.yaml
+    output: rules/LAN.yaml
 
-    report: reports/Test.json
+    report: reports/LAN.json
 
     sources:
 
@@ -96,7 +96,7 @@ groups:
 
   LAN:
 
-    enabled: false
+    enabled: true
 
     output: rules/LAN.yaml
 

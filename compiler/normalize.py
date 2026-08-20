@@ -10,7 +10,6 @@ from .models import (
     RuleType,
 )
 
-
 # ============================================================
 # 常量
 # ============================================================
@@ -46,17 +45,15 @@ def _clean_string(value: str) -> str:
     """
     value = value.strip()
 
-    if len(value) >= 2:
-        if (
+    if len(value) >= 2 and (
+        (
             value.startswith('"')
             and value.endswith('"')
-        ):
-            value = value[1:-1].strip()
-
-        elif (
+        ) or (
             value.startswith("'")
             and value.endswith("'")
-        ):
+        )
+    ):
             value = value[1:-1].strip()
 
     return value
@@ -143,11 +140,9 @@ def normalize_domain_value(
         return value, None
 
     # 防止上游把 domain provider 风格残留进来
-    if value.startswith("+."):
-        value = value[2:]
+    value = value.removeprefix("+.")
 
-    if value.startswith("*."):
-        value = value[2:]
+    value = value.removeprefix("*.")
 
     value = value.strip().lower()
 
@@ -187,8 +182,7 @@ def normalize_domain_value(
     )
 
     # DOMAIN 可能有 localhost / router 等单标签名称
-    if rule_type == RuleType.DOMAIN:
-        if "." not in value:
+    if rule_type == RuleType.DOMAIN and "." not in value:
             single_label = re.compile(
                 r"^[a-z0-9_][a-z0-9_-]{0,62}$"
             )
@@ -199,6 +193,21 @@ def normalize_domain_value(
             return value, None
 
     if not pattern.match(value):
+
+        # Clash/Mihomo 允许本地域名：
+        # local
+        # lan
+        # internal
+        # localhost
+        # home
+
+        single_label = re.compile(
+            r"^[a-z0-9_][a-z0-9_-]{0,62}$"
+        )
+
+        if single_label.match(value):
+            return value, None
+
         return None, "域名格式无效"
 
     return value, None

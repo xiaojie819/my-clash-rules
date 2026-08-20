@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+.vscode/
+
+reports/
+
+.env
+
+.ruff_cache/
+.pytest_cache/
+.venv/

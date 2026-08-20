@@ -3,7 +3,6 @@ from __future__ import annotations
 import ipaddress
 from dataclasses import dataclass, field, replace
 from enum import Enum
-from typing import Iterable
 
 from .models import (
     BuildStats,
@@ -12,7 +11,6 @@ from .models import (
     RuleSource,
     RuleType,
 )
-
 
 # ============================================================
 # 优化模式
@@ -470,7 +468,7 @@ def analyze_cidr_coverage(
         Rule,
     ] = {}
 
-    for rule_type, items in by_type.items():
+    for items in by_type.values():
 
         # prefixlen 越小，网段越大。
         sorted_items = sorted(
@@ -545,18 +543,15 @@ def analyze_cidr_coverage(
 
         covered_count += 1
 
-        issues.append(
-            ParseIssue(
-                message=(
-                    f"{rule.type.value} "
-                    f"{rule.value} 被更大网段 "
-                    f"{covering_rule.value} 覆盖"
-                ),
-                raw=rule.raw,
-                source=rule.source,
-                level="info",
-            )
-        )
+        # CIDR 覆盖属于集合关系，
+        # 但在 Clash 规则中保留小网段
+        # 有时是为了可读性和兼容性。
+        #
+        # SAFE 模式：
+        # 不删除、不产生提示。
+        #
+        # AGGRESSIVE 模式：
+        # 后续才考虑真正移除。
 
         if aggressive:
             continue

@@ -3,11 +3,10 @@ from __future__ import annotations
 import ipaddress
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .models import SourceFormat
-
 
 # ============================================================
 # 常见规则类型
@@ -191,10 +190,12 @@ def looks_like_domain(value: str) -> bool:
         return False
 
     # 常见 domain-provider 前缀
-    if value.startswith("+."):
-        value = value[2:]
-
-    elif value.startswith("*."):
+    if value.startswith(
+        (
+            "+.",
+            "*.",
+        )
+    ):
         value = value[2:]
 
     # 排除 URL
@@ -323,9 +324,11 @@ def looks_like_json(text: str) -> bool:
     if not stripped:
         return False
 
-    if not (
-        stripped.startswith("{")
-        or stripped.startswith("[")
+    if not stripped.startswith(
+        (
+            "{",
+            "[",
+        )
     ):
         return False
 
@@ -600,8 +603,7 @@ def detect_format(text: str) -> DetectionResult:
     # 6. 纯 CIDR
     # --------------------------------------------------------
 
-    if cidr_count > 0:
-        if cidr_ratio >= 0.7:
+    if cidr_count > 0 and cidr_ratio >= 0.7:
             return DetectionResult(
                 format=SourceFormat.PLAIN_CIDR,
                 confidence=min(
@@ -616,8 +618,7 @@ def detect_format(text: str) -> DetectionResult:
     # 7. 纯域名
     # --------------------------------------------------------
 
-    if domain_count > 0:
-        if domain_ratio >= 0.7:
+    if domain_count > 0 and domain_ratio >= 0.7:
             return DetectionResult(
                 format=SourceFormat.PLAIN_DOMAIN,
                 confidence=min(

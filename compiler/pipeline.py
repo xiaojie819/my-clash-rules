@@ -3,13 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .build import (
-    OutputMode,
-    compile_text,
-    fetch_url_text,
-    render_classical_yaml,
-    write_build_report,
-)
 from .config import (
     AppConfig,
     GroupConfig,
@@ -17,19 +10,19 @@ from .config import (
     enabled_groups,
     enabled_sources,
 )
+from .fetcher import fetch_url_text
 from .models import (
     ParseIssue,
     Rule,
     RuleSource,
-    SourceFormat,
 )
 from .normalize import normalize_rules
 from .optimize import (
-    OptimizeMode,
     optimize_rules,
 )
 from .parsers import parse_rules
-
+from .renderer import render_classical_yaml
+from .sanitize import sanitize_text
 
 # ============================================================
 # Pipeline Result
@@ -116,6 +109,12 @@ def build_single_source(
             ),
         )
 
+        sanitize_result = sanitize_text(
+            text
+        )
+
+        text = sanitize_result.text
+
         rule_source = RuleSource(
             name=source.name,
             url=source.url,
@@ -155,7 +154,11 @@ def build_single_source(
         result.success = True
 
 
-    except Exception as exc:
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+    ) as exc:
 
         result.issues.append(
             ParseIssue(
@@ -511,11 +514,11 @@ def pipeline_summary(
 
         lines.append(
 
-            (
+            
                 f"- {group.name}: "
                 f"{'OK' if group.success else 'FAIL'} "
                 f"rules={len(group.rules)}"
-            )
+            
 
         )
 

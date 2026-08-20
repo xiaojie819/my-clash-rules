@@ -10,7 +10,6 @@ from .build import OutputMode
 from .models import SourceFormat
 from .optimize import OptimizeMode
 
-
 # ============================================================
 # 异常
 # ============================================================
@@ -456,12 +455,10 @@ def parse_source(
             f"{prefix}.url 不能为空"
         )
 
-    if not (
-        url.startswith(
-            "http://"
-        )
-        or url.startswith(
-            "https://"
+    if not url.startswith(
+        (
+            "http://",
+            "https://",
         )
     ):
         raise ConfigError(
