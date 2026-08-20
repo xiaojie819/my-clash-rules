@@ -1,4 +1,2 @@
-[[rule_sets]]
-group = "🚀 手动切换"
-url = "https://raw.githubusercontent.com/你的用户名/你的仓库名/main/rules/Test.yaml"
-type = "rule-set"
+payload:
+  - DOMAIN-SUFFIX,example.com
