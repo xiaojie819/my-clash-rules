@@ -39,10 +39,21 @@ def audit_group(group):
         print(f"SOURCE: {source.name}")
         print(f"URL: {source.url}")
 
-        text = fetch_url_text(
-            source.url,
-            timeout=source.timeout or group.timeout,
-        )
+        try:
+            text = fetch_url_text(
+                source.url,
+                timeout=source.timeout or group.timeout,
+            )
+
+        except Exception as exc:
+            print(
+                f"FETCH FAILED: {source.url}"
+            )
+            print(
+                f"ERROR: {exc}"
+            )
+            print()
+            continue
 
         sanitize_result = sanitize_text(text)
 
