@@ -4,9 +4,9 @@ from pathlib import Path
 import yaml
 
 from compiler.config import enabled_groups, enabled_sources, load_config
-from compiler.fetcher import fetch_url_text
 from compiler.extractor import extract_rules
-from compiler.models import RuleSource, SourceFormat
+from compiler.fetcher import fetch_url_text
+from compiler.models import RuleSource
 from compiler.normalize import normalize_rules
 from compiler.optimize import optimize_rules
 from compiler.sanitize import sanitize_text
@@ -46,12 +46,8 @@ def audit_group(group):
             )
 
         except RuntimeError as exc:
-            print(
-                f"FETCH FAILED: {source.url}"
-            )
-            print(
-                f"ERROR: {exc}"
-            )
+            print(f"FETCH FAILED: {source.url}")
+            print(f"ERROR: {exc}")
             print()
             continue
 
@@ -88,9 +84,7 @@ def audit_group(group):
             len(parsed.issues),
         )
 
-        normalized, normalize_issues = normalize_rules(
-            parsed.rules
-        )
+        normalized, normalize_issues = normalize_rules(parsed.rules)
 
         print_counts(
             "normalized rules",
@@ -136,11 +130,7 @@ def audit_group(group):
         )
         return
 
-    data = yaml.safe_load(
-        output_path.read_text(
-            encoding="utf-8"
-        )
-    )
+    data = yaml.safe_load(output_path.read_text(encoding="utf-8"))
 
     payload = data.get(
         "payload",
@@ -154,24 +144,16 @@ def audit_group(group):
     )
 
     output_parsed = extract_rules(
-        output_path.read_text(
-            encoding="utf-8"
-        ),
+        output_path.read_text(encoding="utf-8"),
         RuleSource(
             name="generated-output",
             url=str(output_path),
         ),
     )
 
-    expected_keys = {
-        rule.canonical_key()
-        for rule in optimized.rules
-    }
+    expected_keys = {rule.canonical_key() for rule in optimized.rules}
 
-    output_keys = {
-        rule.canonical_key()
-        for rule in output_parsed.rules
-    }
+    output_keys = {rule.canonical_key() for rule in output_parsed.rules}
 
     missing = expected_keys - output_keys
     extra = output_keys - expected_keys
@@ -186,11 +168,7 @@ def audit_group(group):
         len(extra),
     )
 
-    total_issues = (
-        all_issues
-        + optimized.issues
-        + []
-    )
+    total_issues = all_issues + optimized.issues + []
 
     print(
         "total issues:",
@@ -210,19 +188,14 @@ def audit_group(group):
     if total_issues:
         print("\nISSUES:")
         for issue in total_issues:
-            print(
-                f" [{issue.level}] "
-                f"{issue.message}"
-            )
+            print(f" [{issue.level}] {issue.message}")
 
     assert payload
     assert not missing
     assert not extra
 
     print()
-    print(
-        f"RESULT: {group.name} PASS"
-    )
+    print(f"RESULT: {group.name} PASS")
 
 
 def main():
@@ -231,9 +204,7 @@ def main():
     groups = enabled_groups(config)
 
     if not groups:
-        raise SystemExit(
-            "没有启用的规则组"
-        )
+        raise SystemExit("没有启用的规则组")
 
     for group in groups:
         audit_group(group)

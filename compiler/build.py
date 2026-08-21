@@ -5,8 +5,8 @@ from enum import Enum
 from pathlib import Path
 
 from .detect import detect_format
-from .fetcher import fetch_url_text
 from .extractor import extract_rules
+from .fetcher import fetch_url_text
 from .io import read_file_text
 from .models import (
     BuildStats,

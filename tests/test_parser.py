@@ -1,5 +1,5 @@
-from compiler.models import RuleSource, RuleType, SourceFormat
 from compiler.extractor import extract_rules
+from compiler.models import RuleSource, RuleType, SourceFormat
 
 
 def test_parse_classical_rules():

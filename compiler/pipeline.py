@@ -10,8 +10,8 @@ from .config import (
     enabled_groups,
     enabled_sources,
 )
-from .fetcher import fetch_url_text
 from .extractor import extract_rules
+from .fetcher import fetch_url_text
 from .models import (
     ParseIssue,
     Rule,

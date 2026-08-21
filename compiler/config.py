@@ -445,7 +445,8 @@ def parse_source(
             current=_as_string(
                 raw.get("intent"),
                 field_name=f"{prefix}.intent",
-            ) or "unknown",
+            )
+            or "unknown",
         ),
         url=url,
         enabled=enabled,
