@@ -134,6 +134,15 @@ groups:
         format: auto
 
 
+      - name: Loyalsoldier-Proxy
+
+        enabled: true
+
+        url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/proxy.txt
+
+        format: auto
+
+
   # ----------------------------------------------------------
   # AI
   #
