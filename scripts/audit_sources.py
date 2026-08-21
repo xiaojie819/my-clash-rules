@@ -45,7 +45,7 @@ def audit_group(group):
                 timeout=source.timeout or group.timeout,
             )
 
-        except Exception as exc:
+        except RuntimeError as exc:
             print(
                 f"FETCH FAILED: {source.url}"
             )
