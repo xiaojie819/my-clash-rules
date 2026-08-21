@@ -16,6 +16,7 @@ from .models import (
 # 优化模式
 # ============================================================
 
+
 class OptimizeMode(str, Enum):
     """
     SAFE:
@@ -34,6 +35,7 @@ class OptimizeMode(str, Enum):
 # ============================================================
 # 优化结果
 # ============================================================
+
 
 @dataclass(slots=True)
 class OptimizeResult:
@@ -57,6 +59,7 @@ class OptimizeResult:
 # ============================================================
 # 通用工具
 # ============================================================
+
 
 def _clone_rule(
     rule: Rule,
@@ -96,9 +99,7 @@ def _merge_sources_into_metadata(
         这条规则来自哪些上游。
     """
 
-    metadata = dict(
-        keeper.metadata
-    )
+    metadata = dict(keeper.metadata)
 
     provenance = list(
         metadata.get(
@@ -107,42 +108,22 @@ def _merge_sources_into_metadata(
         )
     )
 
-    existing_source = _source_to_dict(
-        keeper.source
-    )
+    existing_source = _source_to_dict(keeper.source)
 
-    duplicate_source = _source_to_dict(
-        duplicate.source
-    )
+    duplicate_source = _source_to_dict(duplicate.source)
 
-    if (
-        existing_source is not None
-        and existing_source not in provenance
-    ):
-        provenance.append(
-            existing_source
-        )
+    if existing_source is not None and existing_source not in provenance:
+        provenance.append(existing_source)
 
-    if (
-        duplicate_source is not None
-        and duplicate_source not in provenance
-    ):
-        provenance.append(
-            duplicate_source
-        )
+    if duplicate_source is not None and duplicate_source not in provenance:
+        provenance.append(duplicate_source)
 
     if provenance:
-        metadata[
-            "provenance"
-        ] = provenance
+        metadata["provenance"] = provenance
 
-    tags = set(
-        keeper.tags
-    )
+    tags = set(keeper.tags)
 
-    tags.add(
-        "merged-source"
-    )
+    tags.add("merged-source")
 
     return _clone_rule(
         keeper,
@@ -154,6 +135,7 @@ def _merge_sources_into_metadata(
 # ============================================================
 # 完全重复去重
 # ============================================================
+
 
 def deduplicate_exact(
     rules: list[Rule],
@@ -180,40 +162,27 @@ def deduplicate_exact(
     duplicate_count = 0
 
     for rule in rules:
-
         # 禁用规则不参与正常 dedupe，
         # 避免 UNKNOWN / 无效规则信息被吃掉。
         if not rule.enabled:
-            output.append(
-                rule
-            )
+            output.append(rule)
             continue
 
         key = rule.canonical_key()
 
-        existing_index = key_to_index.get(
-            key
-        )
+        existing_index = key_to_index.get(key)
 
         if existing_index is None:
-            key_to_index[
-                key
-            ] = len(output)
+            key_to_index[key] = len(output)
 
-            output.append(
-                rule
-            )
+            output.append(rule)
             continue
 
         duplicate_count += 1
 
-        existing_rule = output[
-            existing_index
-        ]
+        existing_rule = output[existing_index]
 
-        output[
-            existing_index
-        ] = _merge_sources_into_metadata(
+        output[existing_index] = _merge_sources_into_metadata(
             existing_rule,
             rule,
         )
@@ -224,6 +193,7 @@ def deduplicate_exact(
 # ============================================================
 # DOMAIN 覆盖分析
 # ============================================================
+
 
 def _domain_is_under_suffix(
     domain: str,
@@ -239,20 +209,14 @@ def _domain_is_under_suffix(
     覆盖。
     """
 
-    domain = domain.lower().rstrip(
-        "."
-    )
+    domain = domain.lower().rstrip(".")
 
-    suffix = suffix.lower().rstrip(
-        "."
-    )
+    suffix = suffix.lower().rstrip(".")
 
     if domain == suffix:
         return True
 
-    return domain.endswith(
-        "." + suffix
-    )
+    return domain.endswith("." + suffix)
 
 
 def analyze_domain_coverage(
@@ -280,11 +244,7 @@ def analyze_domain_coverage(
     suffixes = {
         rule.value
         for rule in rules
-        if (
-            rule.enabled
-            and rule.type
-            == RuleType.DOMAIN_SUFFIX
-        )
+        if (rule.enabled and rule.type == RuleType.DOMAIN_SUFFIX)
     }
 
     if not suffixes:
@@ -305,14 +265,8 @@ def analyze_domain_coverage(
     )
 
     for rule in rules:
-
-        if (
-            not rule.enabled
-            or rule.type != RuleType.DOMAIN
-        ):
-            output.append(
-                rule
-            )
+        if not rule.enabled or rule.type != RuleType.DOMAIN:
+            output.append(rule)
             continue
 
         covering_suffix: str | None = None
@@ -326,9 +280,7 @@ def analyze_domain_coverage(
                 break
 
         if covering_suffix is None:
-            output.append(
-                rule
-            )
+            output.append(rule)
             continue
 
         covered_count += 1
@@ -336,9 +288,7 @@ def analyze_domain_coverage(
         issues.append(
             ParseIssue(
                 message=(
-                    f"DOMAIN {rule.value} "
-                    f"被 DOMAIN-SUFFIX "
-                    f"{covering_suffix} 覆盖"
+                    f"DOMAIN {rule.value} 被 DOMAIN-SUFFIX {covering_suffix} 覆盖"
                 ),
                 raw=rule.raw,
                 source=rule.source,
@@ -349,21 +299,13 @@ def analyze_domain_coverage(
         if aggressive:
             continue
 
-        tags = set(
-            rule.tags
-        )
+        tags = set(rule.tags)
 
-        tags.add(
-            "covered-by-domain-suffix"
-        )
+        tags.add("covered-by-domain-suffix")
 
-        metadata = dict(
-            rule.metadata
-        )
+        metadata = dict(rule.metadata)
 
-        metadata[
-            "covered_by"
-        ] = {
+        metadata["covered_by"] = {
             "type": RuleType.DOMAIN_SUFFIX.value,
             "value": covering_suffix,
         }
@@ -386,6 +328,7 @@ def analyze_domain_coverage(
 # ============================================================
 # CIDR 覆盖分析
 # ============================================================
+
 
 def _parse_network(
     rule: Rule,
@@ -440,15 +383,10 @@ def analyze_cidr_coverage(
     ] = {}
 
     for rule in rules:
-        if (
-            not rule.enabled
-            or rule.type not in cidr_types
-        ):
+        if not rule.enabled or rule.type not in cidr_types:
             continue
 
-        network = _parse_network(
-            rule
-        )
+        network = _parse_network(rule)
 
         if network is None:
             continue
@@ -469,16 +407,13 @@ def analyze_cidr_coverage(
     ] = {}
 
     for items in by_type.values():
-
         # prefixlen 越小，网段越大。
         sorted_items = sorted(
             items,
             key=lambda item: (
                 item[1].version,
                 item[1].prefixlen,
-                int(
-                    item[1].network_address
-                ),
+                int(item[1].network_address),
             ),
         )
 
@@ -490,27 +425,18 @@ def analyze_cidr_coverage(
         ] = []
 
         for rule, network in sorted_items:
-
             covering_rule: Rule | None = None
 
             for parent_rule, parent_network in accepted:
-
-                if (
-                    parent_network.version
-                    != network.version
-                ):
+                if parent_network.version != network.version:
                     continue
 
-                if network.subnet_of(
-                    parent_network
-                ):
+                if network.subnet_of(parent_network):
                     covering_rule = parent_rule
                     break
 
             if covering_rule is not None:
-                coverage_map[
-                    rule.canonical_key()
-                ] = covering_rule
+                coverage_map[rule.canonical_key()] = covering_rule
                 continue
 
             accepted.append(
@@ -530,15 +456,10 @@ def analyze_cidr_coverage(
     covered_count = 0
 
     for rule in rules:
-
-        covering_rule = coverage_map.get(
-            rule.canonical_key()
-        )
+        covering_rule = coverage_map.get(rule.canonical_key())
 
         if covering_rule is None:
-            output.append(
-                rule
-            )
+            output.append(rule)
             continue
 
         covered_count += 1
@@ -556,21 +477,13 @@ def analyze_cidr_coverage(
         if aggressive:
             continue
 
-        tags = set(
-            rule.tags
-        )
+        tags = set(rule.tags)
 
-        tags.add(
-            "covered-by-cidr"
-        )
+        tags.add("covered-by-cidr")
 
-        metadata = dict(
-            rule.metadata
-        )
+        metadata = dict(rule.metadata)
 
-        metadata[
-            "covered_by"
-        ] = {
+        metadata["covered_by"] = {
             "type": covering_rule.type.value,
             "value": covering_rule.value,
         }
@@ -594,6 +507,7 @@ def analyze_cidr_coverage(
 # 跨类型潜在冲突分析
 # ============================================================
 
+
 def analyze_rule_conflicts(
     rules: list[Rule],
 ) -> list[ParseIssue]:
@@ -606,61 +520,36 @@ def analyze_rule_conflicts(
     issues: list[ParseIssue] = []
 
     domain_exact = {
-        rule.value
-        for rule in rules
-        if (
-            rule.enabled
-            and rule.type == RuleType.DOMAIN
-        )
+        rule.value for rule in rules if (rule.enabled and rule.type == RuleType.DOMAIN)
     }
 
     domain_suffix = {
         rule.value
         for rule in rules
-        if (
-            rule.enabled
-            and rule.type
-            == RuleType.DOMAIN_SUFFIX
-        )
+        if (rule.enabled and rule.type == RuleType.DOMAIN_SUFFIX)
     }
 
     domain_keywords = {
         rule.value
         for rule in rules
-        if (
-            rule.enabled
-            and rule.type
-            == RuleType.DOMAIN_KEYWORD
-        )
+        if (rule.enabled and rule.type == RuleType.DOMAIN_KEYWORD)
     }
 
     # 同一个值同时 exact 和 suffix
-    for value in sorted(
-        domain_exact
-        & domain_suffix
-    ):
+    for value in sorted(domain_exact & domain_suffix):
         issues.append(
             ParseIssue(
-                message=(
-                    f"{value} 同时存在 "
-                    "DOMAIN 与 DOMAIN-SUFFIX"
-                ),
+                message=(f"{value} 同时存在 DOMAIN 与 DOMAIN-SUFFIX"),
                 level="info",
             )
         )
 
     # keyword 太短，潜在误伤
-    for keyword in sorted(
-        domain_keywords
-    ):
+    for keyword in sorted(domain_keywords):
         if len(keyword) <= 2:
             issues.append(
                 ParseIssue(
-                    message=(
-                        "DOMAIN-KEYWORD "
-                        f"{keyword!r} 过短，"
-                        "可能产生大范围误匹配"
-                    ),
+                    message=(f"DOMAIN-KEYWORD {keyword!r} 过短，可能产生大范围误匹配"),
                     level="warning",
                 )
             )
@@ -679,28 +568,19 @@ RULE_TYPE_ORDER: dict[
     RuleType.DOMAIN: 10,
     RuleType.DOMAIN_SUFFIX: 20,
     RuleType.DOMAIN_KEYWORD: 30,
-
     RuleType.IP_CIDR: 40,
     RuleType.IP_CIDR6: 50,
-
     RuleType.SRC_IP_CIDR: 60,
     RuleType.SRC_IP_CIDR6: 70,
-
     RuleType.PROCESS_NAME: 80,
     RuleType.PROCESS_PATH: 90,
-
     RuleType.DST_PORT: 100,
     RuleType.SRC_PORT: 110,
-
     RuleType.NETWORK: 120,
-
     RuleType.GEOIP: 130,
     RuleType.GEOSITE: 140,
-
     RuleType.RULE_SET: 150,
-
     RuleType.URL_REGEX: 160,
-
     RuleType.UNKNOWN: 999,
 }
 
@@ -728,9 +608,7 @@ def sort_rules(
                 900,
             ),
             rule.value.lower(),
-            ",".join(
-                rule.options
-            ),
+            ",".join(rule.options),
         )
 
     return sorted(
@@ -742,6 +620,7 @@ def sort_rules(
 # ============================================================
 # 主优化流程
 # ============================================================
+
 
 def optimize_rules(
     rules: list[Rule],
@@ -756,29 +635,21 @@ def optimize_rules(
         SAFE
     """
 
-    result = OptimizeResult(
-        input_count=len(rules)
-    )
+    result = OptimizeResult(input_count=len(rules))
 
     # --------------------------------------------------------
     # 1. 完全重复
     # --------------------------------------------------------
 
-    deduped, duplicate_count = deduplicate_exact(
-        rules
-    )
+    deduped, duplicate_count = deduplicate_exact(rules)
 
-    result.duplicate_count = (
-        duplicate_count
-    )
+    result.duplicate_count = duplicate_count
 
     # --------------------------------------------------------
     # 2. DOMAIN 覆盖
     # --------------------------------------------------------
 
-    aggressive = (
-        mode == OptimizeMode.AGGRESSIVE
-    )
+    aggressive = mode == OptimizeMode.AGGRESSIVE
 
     (
         domain_processed,
@@ -789,13 +660,9 @@ def optimize_rules(
         aggressive=aggressive,
     )
 
-    result.covered_domain_count = (
-        domain_covered_count
-    )
+    result.covered_domain_count = domain_covered_count
 
-    result.issues.extend(
-        domain_issues
-    )
+    result.issues.extend(domain_issues)
 
     # --------------------------------------------------------
     # 3. CIDR 覆盖
@@ -810,53 +677,31 @@ def optimize_rules(
         aggressive=aggressive,
     )
 
-    result.covered_cidr_count = (
-        cidr_covered_count
-    )
+    result.covered_cidr_count = cidr_covered_count
 
-    result.issues.extend(
-        cidr_issues
-    )
+    result.issues.extend(cidr_issues)
 
     # --------------------------------------------------------
     # 4. 冲突分析
     # --------------------------------------------------------
 
-    result.issues.extend(
-        analyze_rule_conflicts(
-            cidr_processed
-        )
-    )
+    result.issues.extend(analyze_rule_conflicts(cidr_processed))
 
     # --------------------------------------------------------
     # 5. disabled 统计
     # --------------------------------------------------------
 
-    result.disabled_count = sum(
-        1
-        for rule in cidr_processed
-        if not rule.enabled
-    )
+    result.disabled_count = sum(1 for rule in cidr_processed if not rule.enabled)
 
     # --------------------------------------------------------
     # 6. 排序
     # --------------------------------------------------------
 
-    final_rules = (
-        sort_rules(
-            cidr_processed
-        )
-        if sort_output
-        else list(
-            cidr_processed
-        )
-    )
+    final_rules = sort_rules(cidr_processed) if sort_output else list(cidr_processed)
 
     result.rules = final_rules
 
-    result.output_count = len(
-        final_rules
-    )
+    result.output_count = len(final_rules)
 
     return result
 
@@ -864,6 +709,7 @@ def optimize_rules(
 # ============================================================
 # BuildStats 集成
 # ============================================================
+
 
 def apply_optimize_stats(
     stats: BuildStats,
@@ -873,23 +719,13 @@ def apply_optimize_stats(
     把 OptimizeResult 写入 BuildStats。
     """
 
-    stats.duplicate_count += (
-        result.duplicate_count
-    )
+    stats.duplicate_count += result.duplicate_count
 
-    stats.covered_rule_count += (
-        result.covered_domain_count
-        + result.covered_cidr_count
-    )
+    stats.covered_rule_count += result.covered_domain_count + result.covered_cidr_count
 
-    stats.final_rule_count = (
-        result.output_count
-    )
+    stats.final_rule_count = result.output_count
 
-    stats.issues.extend(
-        issue.message
-        for issue in result.issues
-    )
+    stats.issues.extend(issue.message for issue in result.issues)
 
     return stats
 
@@ -898,6 +734,7 @@ def apply_optimize_stats(
 # 调试摘要
 # ============================================================
 
+
 def optimization_summary(
     result: OptimizeResult,
 ) -> dict[str, int]:
@@ -905,14 +742,8 @@ def optimization_summary(
         "input_count": result.input_count,
         "output_count": result.output_count,
         "duplicate_count": result.duplicate_count,
-        "covered_domain_count": (
-            result.covered_domain_count
-        ),
-        "covered_cidr_count": (
-            result.covered_cidr_count
-        ),
+        "covered_domain_count": (result.covered_domain_count),
+        "covered_cidr_count": (result.covered_cidr_count),
         "disabled_count": result.disabled_count,
-        "issue_count": len(
-            result.issues
-        ),
+        "issue_count": len(result.issues),
     }

@@ -13,11 +13,7 @@ def build_report_dict(
     生成后续 reports/*.json 可用的数据。
     """
 
-    stats = (
-        result.stats.as_dict()
-        if result.stats
-        else {}
-    )
+    stats = result.stats.as_dict() if result.stats else {}
 
     level_counts = {
         "error": 0,
@@ -27,39 +23,21 @@ def build_report_dict(
     }
 
     for issue in result.issues:
-        level = (
-            issue.level
-            .strip()
-            .lower()
-        )
+        level = issue.level.strip().lower()
 
         if level in level_counts:
-            level_counts[
-                level
-            ] += 1
+            level_counts[level] += 1
 
         else:
-            level_counts[
-                "other"
-            ] += 1
+            level_counts["other"] += 1
 
     return {
         "success": result.success,
-        "detected_format": (
-            result.detected_format.value
-        ),
-        "output_mode": (
-            result.output_mode.value
-        ),
-        "optimize_mode": (
-            result.optimize_mode.value
-        ),
-        "final_rule_count": (
-            result.final_rule_count
-        ),
-        "issue_levels": (
-            level_counts
-        ),
+        "detected_format": (result.detected_format.value),
+        "output_mode": (result.output_mode.value),
+        "optimize_mode": (result.optimize_mode.value),
+        "final_rule_count": (result.final_rule_count),
+        "issue_levels": (level_counts),
         "stats": stats,
         "issues": [
             {
@@ -68,24 +46,14 @@ def build_report_dict(
                 "raw": issue.raw,
                 "source": (
                     issue.source.url
-                    if (
-                        issue.source
-                        and issue.source.url
-                    )
+                    if (issue.source and issue.source.url)
                     else (
                         issue.source.file
-                        if (
-                            issue.source
-                            and issue.source.file
-                        )
+                        if (issue.source and issue.source.file)
                         else ""
                     )
                 ),
-                "line_number": (
-                    issue.source.line_number
-                    if issue.source
-                    else None
-                ),
+                "line_number": (issue.source.line_number if issue.source else None),
             }
             for issue in result.issues
         ],
@@ -100,18 +68,14 @@ def write_build_report(
     写 JSON 构建报告。
     """
 
-    output_path = Path(
-        output_path
-    )
+    output_path = Path(output_path)
 
     output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    data = build_report_dict(
-        result
-    )
+    data = build_report_dict(result)
 
     output_path.write_text(
         json.dumps(
@@ -125,5 +89,3 @@ def write_build_report(
     )
 
     return output_path
-
-

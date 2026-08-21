@@ -37,6 +37,7 @@ PORT_TYPES = {
 # 基础工具
 # ============================================================
 
+
 def _clean_string(value: str) -> str:
     """
     基础字符串清理：
@@ -46,15 +47,10 @@ def _clean_string(value: str) -> str:
     value = value.strip()
 
     if len(value) >= 2 and (
-        (
-            value.startswith('"')
-            and value.endswith('"')
-        ) or (
-            value.startswith("'")
-            and value.endswith("'")
-        )
+        (value.startswith('"') and value.endswith('"'))
+        or (value.startswith("'") and value.endswith("'"))
     ):
-            value = value[1:-1].strip()
+        value = value[1:-1].strip()
 
     return value
 
@@ -108,6 +104,7 @@ def _clone_rule(
 # ============================================================
 # 域名规范化
 # ============================================================
+
 
 def normalize_domain_value(
     value: str,
@@ -183,17 +180,14 @@ def normalize_domain_value(
 
     # DOMAIN 可能有 localhost / router 等单标签名称
     if rule_type == RuleType.DOMAIN and "." not in value:
-            single_label = re.compile(
-                r"^[a-z0-9_][a-z0-9_-]{0,62}$"
-            )
+        single_label = re.compile(r"^[a-z0-9_][a-z0-9_-]{0,62}$")
 
-            if not single_label.match(value):
-                return None, "DOMAIN 单标签格式无效"
+        if not single_label.match(value):
+            return None, "DOMAIN 单标签格式无效"
 
-            return value, None
+        return value, None
 
     if not pattern.match(value):
-
         # Clash/Mihomo 允许本地域名：
         # local
         # lan
@@ -201,9 +195,7 @@ def normalize_domain_value(
         # localhost
         # home
 
-        single_label = re.compile(
-            r"^[a-z0-9_][a-z0-9_-]{0,62}$"
-        )
+        single_label = re.compile(r"^[a-z0-9_][a-z0-9_-]{0,62}$")
 
         if single_label.match(value):
             return value, None
@@ -216,6 +208,7 @@ def normalize_domain_value(
 # ============================================================
 # IP / CIDR 规范化
 # ============================================================
+
 
 def normalize_cidr_value(
     value: str,
@@ -273,6 +266,7 @@ def normalize_cidr_value(
 # 端口规范化
 # ============================================================
 
+
 def normalize_port_value(
     value: str,
 ) -> tuple[str | None, str | None]:
@@ -308,10 +302,7 @@ def normalize_port_value(
         start = int(match.group(1))
         end = int(match.group(2))
 
-        if not (
-            1 <= start <= 65535
-            and 1 <= end <= 65535
-        ):
+        if not (1 <= start <= 65535 and 1 <= end <= 65535):
             return None, "端口范围超出 1-65535"
 
         if start > end:
@@ -325,6 +316,7 @@ def normalize_port_value(
 # ============================================================
 # NETWORK
 # ============================================================
+
 
 def normalize_network_value(
     value: str,
@@ -348,6 +340,7 @@ def normalize_network_value(
 # GEOIP / GEOSITE
 # ============================================================
 
+
 def normalize_geo_value(
     value: str,
 ) -> tuple[str | None, str | None]:
@@ -367,10 +360,7 @@ def normalize_geo_value(
     if not value:
         return None, "GEO value 为空"
 
-    if any(
-        char.isspace()
-        for char in value
-    ):
+    if any(char.isspace() for char in value):
         return None, "GEO value 包含空白字符"
 
     return value, None
@@ -379,6 +369,7 @@ def normalize_geo_value(
 # ============================================================
 # PROCESS
 # ============================================================
+
 
 def normalize_process_value(
     value: str,
@@ -402,6 +393,7 @@ def normalize_process_value(
 # RULE-SET / URL-REGEX / UNKNOWN
 # ============================================================
 
+
 def normalize_generic_value(
     value: str,
 ) -> tuple[str | None, str | None]:
@@ -416,6 +408,7 @@ def normalize_generic_value(
 # ============================================================
 # 单条规则规范化
 # ============================================================
+
 
 def normalize_rule(
     rule: Rule,
@@ -438,15 +431,11 @@ def normalize_rule(
 
     rule_type = rule.type
 
-    options = _normalize_options(
-        rule.options
-    )
+    options = _normalize_options(rule.options)
 
     tags = set(rule.tags)
 
-    metadata = dict(
-        rule.metadata
-    )
+    metadata = dict(rule.metadata)
 
     # --------------------------------------------------------
     # DOMAIN
@@ -461,9 +450,7 @@ def normalize_rule(
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -494,9 +481,7 @@ def normalize_rule(
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -511,37 +496,27 @@ def normalize_rule(
             value = normalized_value or value
 
             if corrected_type != rule_type:
-                metadata[
-                    "original_rule_type"
-                ] = rule_type.value
+                metadata["original_rule_type"] = rule_type.value
 
-                tags.add(
-                    "type-corrected"
-                )
+                tags.add("type-corrected")
 
                 rule_type = corrected_type
 
         # IP 规则统一 no-resolve
         if "no-resolve" not in options:
-            options.append(
-                "no-resolve"
-            )
+            options.append("no-resolve")
 
     # --------------------------------------------------------
     # PORT
     # --------------------------------------------------------
 
     elif rule_type in PORT_TYPES:
-        normalized_value, error = normalize_port_value(
-            value
-        )
+        normalized_value, error = normalize_port_value(value)
 
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -560,16 +535,12 @@ def normalize_rule(
     # --------------------------------------------------------
 
     elif rule_type == RuleType.NETWORK:
-        normalized_value, error = normalize_network_value(
-            value
-        )
+        normalized_value, error = normalize_network_value(value)
 
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -591,16 +562,12 @@ def normalize_rule(
         RuleType.GEOIP,
         RuleType.GEOSITE,
     }:
-        normalized_value, error = normalize_geo_value(
-            value
-        )
+        normalized_value, error = normalize_geo_value(value)
 
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -622,16 +589,12 @@ def normalize_rule(
         RuleType.PROCESS_NAME,
         RuleType.PROCESS_PATH,
     }:
-        normalized_value, error = normalize_process_value(
-            value
-        )
+        normalized_value, error = normalize_process_value(value)
 
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -650,16 +613,12 @@ def normalize_rule(
     # --------------------------------------------------------
 
     else:
-        normalized_value, error = normalize_generic_value(
-            value
-        )
+        normalized_value, error = normalize_generic_value(value)
 
         if error:
             enabled = False
 
-            tags.add(
-                "normalize-error"
-            )
+            tags.add("normalize-error")
 
             issues.append(
                 ParseIssue(
@@ -690,6 +649,7 @@ def normalize_rule(
 # 批量规范化
 # ============================================================
 
+
 def normalize_rules(
     rules: list[Rule],
 ) -> tuple[list[Rule], list[ParseIssue]]:
@@ -702,17 +662,11 @@ def normalize_rules(
     issues: list[ParseIssue] = []
 
     for rule in rules:
-        normalized, rule_issues = normalize_rule(
-            rule
-        )
+        normalized, rule_issues = normalize_rule(rule)
 
-        normalized_rules.append(
-            normalized
-        )
+        normalized_rules.append(normalized)
 
-        issues.extend(
-            rule_issues
-        )
+        issues.extend(rule_issues)
 
     return normalized_rules, issues
 
@@ -720,6 +674,7 @@ def normalize_rules(
 # ============================================================
 # 调试辅助
 # ============================================================
+
 
 def normalization_summary(
     rules: list[Rule],
@@ -730,25 +685,13 @@ def normalization_summary(
 
     total = len(rules)
 
-    enabled = sum(
-        1
-        for rule in rules
-        if rule.enabled
-    )
+    enabled = sum(1 for rule in rules if rule.enabled)
 
     disabled = total - enabled
 
-    corrected = sum(
-        1
-        for rule in rules
-        if "type-corrected" in rule.tags
-    )
+    corrected = sum(1 for rule in rules if "type-corrected" in rule.tags)
 
-    errors = sum(
-        1
-        for rule in rules
-        if "normalize-error" in rule.tags
-    )
+    errors = sum(1 for rule in rules if "normalize-error" in rule.tags)
 
     return {
         "total": total,

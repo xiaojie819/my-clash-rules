@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 # 统计
 # ============================================================
 
+
 @dataclass(slots=True)
 class SanitizeStats:
     """
@@ -18,9 +19,7 @@ class SanitizeStats:
 
     removed_count: int = 0
 
-    removed_chars: dict[str, int] = field(
-        default_factory=dict
-    )
+    removed_chars: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -50,6 +49,7 @@ ZERO_WIDTH_CHARS = {
 # 清理函数
 # ============================================================
 
+
 def sanitize_text(
     text: str,
 ) -> SanitizeResult:
@@ -71,29 +71,19 @@ def sanitize_text(
     - YAML符号
     """
 
-
-    stats = SanitizeStats(
-        original_length=len(text)
-    )
-
+    stats = SanitizeStats(original_length=len(text))
 
     output: list[str] = []
 
-
     for char in text:
-
-
         # --------------------------------
         # 零宽字符
         # --------------------------------
 
         if char in ZERO_WIDTH_CHARS:
-
             stats.removed_count += 1
 
-            name = (
-                ZERO_WIDTH_CHARS[char]
-            )
+            name = ZERO_WIDTH_CHARS[char]
 
             stats.removed_chars[name] = (
                 stats.removed_chars.get(
@@ -104,8 +94,6 @@ def sanitize_text(
             )
 
             continue
-
-
 
         # --------------------------------
         # ASCII 控制字符
@@ -125,24 +113,18 @@ def sanitize_text(
         code = ord(char)
 
         if code < 32:
-
             if char in (
                 "\n",
                 "\r",
                 "\t",
             ):
-                output.append(
-                    char
-                )
+                output.append(char)
 
                 continue
 
-
             stats.removed_count += 1
 
-            name = (
-                f"CONTROL_{code:02X}"
-            )
+            name = f"CONTROL_{code:02X}"
 
             stats.removed_chars[name] = (
                 stats.removed_chars.get(
@@ -154,39 +136,23 @@ def sanitize_text(
 
             continue
 
+        output.append(char)
 
-
-        output.append(
-            char
-        )
-
-
-    cleaned = "".join(
-        output
-    )
-
+    cleaned = "".join(output)
 
     # ------------------------------------
     # 统一换行
     # ------------------------------------
 
-    cleaned = (
-        cleaned
-        .replace(
-            "\r\n",
-            "\n",
-        )
-        .replace(
-            "\r",
-            "\n",
-        )
+    cleaned = cleaned.replace(
+        "\r\n",
+        "\n",
+    ).replace(
+        "\r",
+        "\n",
     )
 
-
-    stats.cleaned_length = len(
-        cleaned
-    )
-
+    stats.cleaned_length = len(cleaned)
 
     return SanitizeResult(
         text=cleaned,
@@ -198,24 +164,14 @@ def sanitize_text(
 # 辅助
 # ============================================================
 
+
 def sanitize_summary(
     result: SanitizeResult,
 ) -> dict[str, object]:
 
     return {
-        "original_length": (
-            result.stats.original_length
-        ),
-
-        "cleaned_length": (
-            result.stats.cleaned_length
-        ),
-
-        "removed_count": (
-            result.stats.removed_count
-        ),
-
-        "removed_chars": (
-            result.stats.removed_chars
-        ),
+        "original_length": (result.stats.original_length),
+        "cleaned_length": (result.stats.cleaned_length),
+        "removed_count": (result.stats.removed_count),
+        "removed_chars": (result.stats.removed_chars),
     }

@@ -30,27 +30,19 @@ RULE_TYPE_MAP: dict[str, RuleType] = {
     "DOMAIN": RuleType.DOMAIN,
     "DOMAIN-SUFFIX": RuleType.DOMAIN_SUFFIX,
     "DOMAIN-KEYWORD": RuleType.DOMAIN_KEYWORD,
-
     "IP-CIDR": RuleType.IP_CIDR,
     "IP-CIDR6": RuleType.IP_CIDR6,
-
     "SRC-IP-CIDR": RuleType.SRC_IP_CIDR,
     "SRC-IP-CIDR6": RuleType.SRC_IP_CIDR6,
-
     "PROCESS-NAME": RuleType.PROCESS_NAME,
     "PROCESS-PATH": RuleType.PROCESS_PATH,
-
     "DST-PORT": RuleType.DST_PORT,
     "SRC-PORT": RuleType.SRC_PORT,
-
     "NETWORK": RuleType.NETWORK,
-
     "GEOIP": RuleType.GEOIP,
     "GEOSITE": RuleType.GEOSITE,
-
     "RULE-SET": RuleType.RULE_SET,
     "RULESET": RuleType.RULE_SET,
-
     "URL-REGEX": RuleType.URL_REGEX,
 }
 
@@ -58,6 +50,7 @@ RULE_TYPE_MAP: dict[str, RuleType] = {
 # ============================================================
 # 通用工具
 # ============================================================
+
 
 def _make_source(
     source: RuleSource | None,
@@ -90,11 +83,7 @@ def _clean_line(line: str) -> str:
     - 去 YAML "- "
     - 去最外层引号
     """
-    return strip_quotes(
-        strip_yaml_list_prefix(
-            line.strip()
-        )
-    ).strip()
+    return strip_quotes(strip_yaml_list_prefix(line.strip())).strip()
 
 
 def _split_rule_parts(line: str) -> list[str]:
@@ -112,10 +101,7 @@ def _split_rule_parts(line: str) -> list[str]:
 
     对高级规则后面可以再专门扩展。
     """
-    parts = [
-        part.strip()
-        for part in line.split(",")
-    ]
+    parts = [part.strip() for part in line.split(",")]
 
     return parts
 
@@ -177,6 +163,7 @@ def _cidr_rule_type(value: str) -> RuleType:
 # 单条规则解析
 # ============================================================
 
+
 def parse_classical_rule_line(
     line: str,
     *,
@@ -227,11 +214,7 @@ def parse_classical_rule_line(
 
     value = parts[1].strip()
 
-    options = [
-        part.strip()
-        for part in parts[2:]
-        if part.strip()
-    ]
+    options = [part.strip() for part in parts[2:] if part.strip()]
 
     rule_type = RULE_TYPE_MAP.get(
         type_name,
@@ -312,9 +295,7 @@ def parse_domain_line(
             ),
         )
 
-    rule_type, value = _normalize_domain_provider_value(
-        clean
-    )
+    rule_type, value = _normalize_domain_provider_value(clean)
 
     return Rule(
         type=rule_type,
@@ -390,6 +371,7 @@ def parse_cidr_line(
 # YAML payload 提取
 # ============================================================
 
+
 def extract_payload_lines(text: str) -> list[tuple[int, str]]:
     """
     从简单 Clash/Mihomo YAML 中提取：
@@ -429,9 +411,7 @@ def extract_payload_lines(text: str) -> list[tuple[int, str]]:
 
         if match:
             payload_index = index
-            payload_indent = len(
-                match.group(1)
-            )
+            payload_indent = len(match.group(1))
             break
 
     if payload_index is None:
@@ -454,18 +434,11 @@ def extract_payload_lines(text: str) -> list[tuple[int, str]]:
         if stripped.startswith(COMMENT_PREFIXES):
             continue
 
-        indent = len(
-            raw_line
-        ) - len(
-            raw_line.lstrip()
-        )
+        indent = len(raw_line) - len(raw_line.lstrip())
 
         # 已经回到 payload 同级或更外层，
         # 认为 payload 结束。
-        if (
-            indent <= payload_indent
-            and not stripped.startswith("-")
-        ):
+        if indent <= payload_indent and not stripped.startswith("-"):
             break
 
         if stripped.startswith("-"):
@@ -482,6 +455,7 @@ def extract_payload_lines(text: str) -> list[tuple[int, str]]:
 # ============================================================
 # 各格式解析
 # ============================================================
+
 
 def parse_clash_classical(
     text: str,
@@ -734,9 +708,7 @@ def parse_mixed_text(
         if _is_comment_or_empty(raw_line):
             continue
 
-        clean = _clean_line(
-            raw_line
-        )
+        clean = _clean_line(raw_line)
 
         parsed: Rule | ParseIssue | None
 
@@ -783,6 +755,7 @@ def parse_mixed_text(
 # YAML fallback
 # ============================================================
 
+
 def parse_generic_yaml(
     text: str,
     *,
@@ -805,18 +778,14 @@ def parse_generic_yaml(
     if not payload_lines:
         result.issues.append(
             ParseIssue(
-                message=(
-                    "检测为 YAML，但不存在可解析的 payload 列表"
-                ),
+                message=("检测为 YAML，但不存在可解析的 payload 列表"),
                 source=source,
             )
         )
         return result
 
     for line_number, raw_line in payload_lines:
-        clean = _clean_line(
-            raw_line
-        )
+        clean = _clean_line(raw_line)
 
         parsed: Rule | ParseIssue | None
 
@@ -863,6 +832,7 @@ def parse_generic_yaml(
 # 结果辅助
 # ============================================================
 
+
 def _append_parsed(
     result: ParseResult,
     parsed: Rule | ParseIssue | None,
@@ -901,6 +871,7 @@ def _append_parsed(
 # ============================================================
 # 总入口
 # ============================================================
+
 
 def parse_rules(
     text: str,
@@ -992,9 +963,7 @@ def parse_rules(
             source=source,
             issues=[
                 ParseIssue(
-                    message=(
-                        "JSON 已检测成功，但 JSON 规则解析器尚未实现"
-                    ),
+                    message=("JSON 已检测成功，但 JSON 规则解析器尚未实现"),
                     source=source,
                     level="warning",
                 )

@@ -28,6 +28,7 @@ from .renderer import render_classical_yaml
 # 输出模式
 # ============================================================
 
+
 class OutputMode(str, Enum):
     """
     STRICT:
@@ -53,6 +54,7 @@ class OutputMode(str, Enum):
 # ============================================================
 # 构建结果
 # ============================================================
+
 
 @dataclass(slots=True)
 class BuildResult:
@@ -84,10 +86,7 @@ class BuildResult:
 
         warning / info 不算失败。
         """
-        return not any(
-            issue.level.lower() == "error"
-            for issue in self.issues
-        )
+        return not any(issue.level.lower() == "error" for issue in self.issues)
 
     @property
     def final_rule_count(self) -> int:
@@ -101,6 +100,7 @@ class BuildResult:
 # ============================================================
 # 输出过滤
 # ============================================================
+
 
 def filter_rules_for_output(
     rules: list[Rule],
@@ -127,7 +127,6 @@ def filter_rules_for_output(
     unsupported_count = 0
 
     for rule in rules:
-
         # normalize 阶段判定无效
         if not rule.enabled:
             continue
@@ -138,9 +137,7 @@ def filter_rules_for_output(
 
             issues.append(
                 ParseIssue(
-                    message=(
-                        "UNKNOWN 规则未输出"
-                    ),
+                    message=("UNKNOWN 规则未输出"),
                     raw=rule.raw,
                     source=rule.source,
                     level="warning",
@@ -149,18 +146,13 @@ def filter_rules_for_output(
             continue
 
         # STRICT 只允许核心类型
-        if (
-            mode == OutputMode.STRICT
-            and not rule.is_core_compatible()
-        ):
+        if mode == OutputMode.STRICT and not rule.is_core_compatible():
             unsupported_count += 1
 
             issues.append(
                 ParseIssue(
                     message=(
-                        "STRICT 模式跳过扩展规则: "
-                        f"{rule.type.value},"
-                        f"{rule.value}"
+                        f"STRICT 模式跳过扩展规则: {rule.type.value},{rule.value}"
                     ),
                     raw=rule.raw,
                     source=rule.source,
@@ -169,9 +161,7 @@ def filter_rules_for_output(
             )
             continue
 
-        output.append(
-            rule
-        )
+        output.append(rule)
 
     return (
         output,
@@ -188,14 +178,11 @@ def filter_rules_for_output(
 # Stats
 # ============================================================
 
+
 def _count_invalid_rules(
     rules: list[Rule],
 ) -> int:
-    return sum(
-        1
-        for rule in rules
-        if not rule.enabled
-    )
+    return sum(1 for rule in rules if not rule.enabled)
 
 
 def _make_stats(
@@ -211,27 +198,14 @@ def _make_stats(
     stats = BuildStats(
         group=group,
         source_count=source_count,
-        raw_rule_count=len(
-            parsed_rules
-        ),
-        normalized_rule_count=len(
-            normalized_rules
-        ),
-        duplicate_count=(
-            optimized.duplicate_count
-        ),
+        raw_rule_count=len(parsed_rules),
+        normalized_rule_count=len(normalized_rules),
+        duplicate_count=(optimized.duplicate_count),
         covered_rule_count=(
-            optimized.covered_domain_count
-            + optimized.covered_cidr_count
+            optimized.covered_domain_count + optimized.covered_cidr_count
         ),
-        invalid_rule_count=(
-            _count_invalid_rules(
-                normalized_rules
-            )
-        ),
-        unsupported_rule_count=(
-            unsupported_count
-        ),
+        invalid_rule_count=(_count_invalid_rules(normalized_rules)),
+        unsupported_rule_count=(unsupported_count),
         final_rule_count=0,
     )
 
@@ -241,6 +215,7 @@ def _make_stats(
 # ============================================================
 # 核心编译函数
 # ============================================================
+
 
 def compile_text(
     text: str,
@@ -278,18 +253,12 @@ def compile_text(
     # --------------------------------------------------------
 
     if format_hint is None:
-        detection = detect_format(
-            text
-        )
+        detection = detect_format(text)
 
-        detected_format = (
-            detection.format
-        )
+        detected_format = detection.format
 
     else:
-        detected_format = (
-            format_hint
-        )
+        detected_format = format_hint
 
     if source is None:
         source = RuleSource(
@@ -304,9 +273,7 @@ def compile_text(
             file=source.file,
             format=detected_format,
             line_number=source.line_number,
-            metadata=dict(
-                source.metadata
-            ),
+            metadata=dict(source.metadata),
         )
 
     # --------------------------------------------------------
@@ -319,9 +286,7 @@ def compile_text(
         format_hint=detected_format,
     )
 
-    issues.extend(
-        parsed.issues
-    )
+    issues.extend(parsed.issues)
 
     # --------------------------------------------------------
     # 3. Normalize
@@ -330,13 +295,9 @@ def compile_text(
     (
         normalized_rules,
         normalize_issues,
-    ) = normalize_rules(
-        parsed.rules
-    )
+    ) = normalize_rules(parsed.rules)
 
-    issues.extend(
-        normalize_issues
-    )
+    issues.extend(normalize_issues)
 
     # --------------------------------------------------------
     # 4. Optimize
@@ -348,9 +309,7 @@ def compile_text(
         sort_output=sort_output,
     )
 
-    issues.extend(
-        optimized.issues
-    )
+    issues.extend(optimized.issues)
 
     # --------------------------------------------------------
     # 5. Output filter
@@ -365,9 +324,7 @@ def compile_text(
         mode=output_mode,
     )
 
-    issues.extend(
-        filter_issues
-    )
+    issues.extend(filter_issues)
 
     # --------------------------------------------------------
     # 6. Stats
@@ -378,19 +335,12 @@ def compile_text(
         parsed_rules=parsed.rules,
         normalized_rules=normalized_rules,
         optimized=optimized,
-        unsupported_count=(
-            unsupported_count
-        ),
+        unsupported_count=(unsupported_count),
     )
 
-    stats.final_rule_count = len(
-        final_rules
-    )
+    stats.final_rule_count = len(final_rules)
 
-    stats.issues.extend(
-        issue.message
-        for issue in issues
-    )
+    stats.issues.extend(issue.message for issue in issues)
 
     # --------------------------------------------------------
     # 7. Render
@@ -398,23 +348,11 @@ def compile_text(
 
     if header_comments is None:
         header_comments = [
-            (
-                "Generated by "
-                "my-clash-rules universal compiler"
-            ),
+            ("Generated by my-clash-rules universal compiler"),
             f"Group: {group}",
-            (
-                "Output mode: "
-                f"{output_mode.value}"
-            ),
-            (
-                "Optimize mode: "
-                f"{optimize_mode.value}"
-            ),
-            (
-                "Rules: "
-                f"{len(final_rules)}"
-            ),
+            (f"Output mode: {output_mode.value}"),
+            (f"Optimize mode: {optimize_mode.value}"),
+            (f"Rules: {len(final_rules)}"),
         ]
 
     content = render_classical_yaml(
@@ -426,9 +364,7 @@ def compile_text(
         rules=final_rules,
         issues=issues,
         stats=stats,
-        detected_format=(
-            detected_format
-        ),
+        detected_format=(detected_format),
         output_mode=output_mode,
         optimize_mode=optimize_mode,
         content=content,
@@ -439,6 +375,7 @@ def compile_text(
 # ============================================================
 # 编译本地文件
 # ============================================================
+
 
 def compile_file(
     path: str | Path,
@@ -452,9 +389,7 @@ def compile_file(
 
     path = Path(path)
 
-    text = read_file_text(
-        path
-    )
+    text = read_file_text(path)
 
     if group is None:
         group = path.stem
@@ -478,6 +413,7 @@ def compile_file(
 # ============================================================
 # 编译 URL
 # ============================================================
+
 
 def compile_url(
     url: str,
@@ -515,6 +451,7 @@ def compile_url(
 # 写入结果
 # ============================================================
 
+
 def write_build_result(
     result: BuildResult,
     output_path: str | Path,
@@ -523,9 +460,7 @@ def write_build_result(
     把 BuildResult 写成最终 YAML 文件。
     """
 
-    output_path = Path(
-        output_path
-    )
+    output_path = Path(output_path)
 
     output_path.parent.mkdir(
         parents=True,
@@ -549,6 +484,7 @@ def write_build_result(
 # 简单调试摘要
 # ============================================================
 
+
 def build_summary(
     result: BuildResult,
 ) -> str:
@@ -557,62 +493,25 @@ def build_summary(
 
     lines = [
         "=== Rule Build Summary ===",
-        (
-            "success: "
-            f"{result.success}"
-        ),
-        (
-            "format: "
-            f"{result.detected_format.value}"
-        ),
-        (
-            "output mode: "
-            f"{result.output_mode.value}"
-        ),
-        (
-            "optimize mode: "
-            f"{result.optimize_mode.value}"
-        ),
+        (f"success: {result.success}"),
+        (f"format: {result.detected_format.value}"),
+        (f"output mode: {result.output_mode.value}"),
+        (f"optimize mode: {result.optimize_mode.value}"),
     ]
 
     if stats:
         lines.extend(
             [
-                (
-                    "raw rules: "
-                    f"{stats.raw_rule_count}"
-                ),
-                (
-                    "normalized: "
-                    f"{stats.normalized_rule_count}"
-                ),
-                (
-                    "duplicates: "
-                    f"{stats.duplicate_count}"
-                ),
-                (
-                    "covered: "
-                    f"{stats.covered_rule_count}"
-                ),
-                (
-                    "invalid: "
-                    f"{stats.invalid_rule_count}"
-                ),
-                (
-                    "unsupported: "
-                    f"{stats.unsupported_rule_count}"
-                ),
-                (
-                    "final: "
-                    f"{stats.final_rule_count}"
-                ),
+                (f"raw rules: {stats.raw_rule_count}"),
+                (f"normalized: {stats.normalized_rule_count}"),
+                (f"duplicates: {stats.duplicate_count}"),
+                (f"covered: {stats.covered_rule_count}"),
+                (f"invalid: {stats.invalid_rule_count}"),
+                (f"unsupported: {stats.unsupported_rule_count}"),
+                (f"final: {stats.final_rule_count}"),
             ]
         )
 
-    lines.append(
-        f"issues: {len(result.issues)}"
-    )
+    lines.append(f"issues: {len(result.issues)}")
 
-    return "\n".join(
-        lines
-    )
+    return "\n".join(lines)

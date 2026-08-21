@@ -64,33 +64,6 @@ groups:
 
 
   # ----------------------------------------------------------
-  # 测试组
-  #
-  # 先保留，用来验证整个多源构建流程。
-  # 后面正式运行后可以删除。
-  # ----------------------------------------------------------
-
-  LAN:
-
-    enabled: true
-
-    output: rules/LAN.yaml
-
-    report: reports/LAN.json
-
-    sources:
-
-      - name: test-local-area-network
-
-        enabled: true
-
-        url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/LocalAreaNetwork.yaml
-
-        # auto = 自动检测
-        format: auto
-
-
-  # ----------------------------------------------------------
   # LAN / 局域网
   # ----------------------------------------------------------
 

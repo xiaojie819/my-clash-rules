@@ -30,39 +30,22 @@ def render_classical_yaml(
     lines: list[str] = []
 
     if header_comments:
-
         for comment in header_comments:
-
             comment = comment.strip()
 
             if not comment:
                 lines.append("#")
 
             else:
-                lines.append(
-                    f"# {comment}"
-                )
+                lines.append(f"# {comment}")
 
         lines.append("")
 
-
-    lines.append(
-        "payload:"
-    )
-
+    lines.append("payload:")
 
     for rule in rules:
+        classical_line = rule.to_classical_line()
 
-        classical_line = (
-            rule.to_classical_line()
-        )
-
-        lines.append(
-            "  - "
-            + _yaml_quote(
-                classical_line
-            )
-        )
-
+        lines.append("  - " + _yaml_quote(classical_line))
 
     return "\n".join(lines) + "\n"

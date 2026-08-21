@@ -14,6 +14,7 @@ from .optimize import OptimizeMode
 # 异常
 # ============================================================
 
+
 class ConfigError(ValueError):
     """
     配置文件格式错误。
@@ -23,6 +24,7 @@ class ConfigError(ValueError):
 # ============================================================
 # 配置对象
 # ============================================================
+
 
 @dataclass(slots=True)
 class DefaultConfig:
@@ -49,9 +51,7 @@ class SourceConfig:
 
     timeout: int | None = None
 
-    metadata: dict[str, Any] = field(
-        default_factory=dict
-    )
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -64,9 +64,7 @@ class GroupConfig:
 
     report: str = ""
 
-    sources: list[SourceConfig] = field(
-        default_factory=list
-    )
+    sources: list[SourceConfig] = field(default_factory=list)
 
     output_mode: OutputMode = OutputMode.STRICT
 
@@ -78,9 +76,7 @@ class GroupConfig:
 
     continue_on_source_error: bool = True
 
-    metadata: dict[str, Any] = field(
-        default_factory=dict
-    )
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -98,6 +94,7 @@ class AppConfig:
 # 基础工具
 # ============================================================
 
+
 def _require_mapping(
     value: Any,
     *,
@@ -110,9 +107,7 @@ def _require_mapping(
         value,
         dict,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是对象/map"
-        )
+        raise ConfigError(f"{field_name} 必须是对象/map")
 
     return value
 
@@ -129,9 +124,7 @@ def _require_list(
         value,
         list,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是列表"
-        )
+        raise ConfigError(f"{field_name} 必须是列表")
 
     return value
 
@@ -151,9 +144,7 @@ def _as_bool(
     ):
         return value
 
-    raise ConfigError(
-        f"{field_name} 必须是 true/false"
-    )
+    raise ConfigError(f"{field_name} 必须是 true/false")
 
 
 def _as_int(
@@ -170,25 +161,16 @@ def _as_int(
         value,
         bool,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是整数"
-        )
+        raise ConfigError(f"{field_name} 必须是整数")
 
     if not isinstance(
         value,
         int,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是整数"
-        )
+        raise ConfigError(f"{field_name} 必须是整数")
 
-    if (
-        minimum is not None
-        and value < minimum
-    ):
-        raise ConfigError(
-            f"{field_name} 不能小于 {minimum}"
-        )
+    if minimum is not None and value < minimum:
+        raise ConfigError(f"{field_name} 不能小于 {minimum}")
 
     return value
 
@@ -206,9 +188,7 @@ def _as_string(
         value,
         str,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是字符串"
-        )
+        raise ConfigError(f"{field_name} 必须是字符串")
 
     return value.strip()
 
@@ -216,6 +196,7 @@ def _as_string(
 # ============================================================
 # 枚举转换
 # ============================================================
+
 
 def _parse_output_mode(
     value: Any,
@@ -236,25 +217,15 @@ def _parse_output_mode(
         value,
         str,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是字符串"
-        )
+        raise ConfigError(f"{field_name} 必须是字符串")
 
     try:
-        return OutputMode(
-            value.strip().lower()
-        )
+        return OutputMode(value.strip().lower())
 
     except ValueError as exc:
-        allowed = ", ".join(
-            item.value
-            for item in OutputMode
-        )
+        allowed = ", ".join(item.value for item in OutputMode)
 
-        raise ConfigError(
-            f"{field_name} 无效: {value!r}；"
-            f"允许值: {allowed}"
-        ) from exc
+        raise ConfigError(f"{field_name} 无效: {value!r}；允许值: {allowed}") from exc
 
 
 def _parse_optimize_mode(
@@ -276,25 +247,15 @@ def _parse_optimize_mode(
         value,
         str,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是字符串"
-        )
+        raise ConfigError(f"{field_name} 必须是字符串")
 
     try:
-        return OptimizeMode(
-            value.strip().lower()
-        )
+        return OptimizeMode(value.strip().lower())
 
     except ValueError as exc:
-        allowed = ", ".join(
-            item.value
-            for item in OptimizeMode
-        )
+        allowed = ", ".join(item.value for item in OptimizeMode)
 
-        raise ConfigError(
-            f"{field_name} 无效: {value!r}；"
-            f"允许值: {allowed}"
-        ) from exc
+        raise ConfigError(f"{field_name} 无效: {value!r}；允许值: {allowed}") from exc
 
 
 def _parse_source_format(
@@ -321,13 +282,9 @@ def _parse_source_format(
         value,
         str,
     ):
-        raise ConfigError(
-            f"{field_name} 必须是字符串"
-        )
+        raise ConfigError(f"{field_name} 必须是字符串")
 
-    normalized = (
-        value.strip().lower()
-    )
+    normalized = value.strip().lower()
 
     if normalized in {
         "",
@@ -337,22 +294,16 @@ def _parse_source_format(
         return None
 
     try:
-        return SourceFormat(
-            normalized
-        )
+        return SourceFormat(normalized)
 
     except ValueError as exc:
         allowed = [
             "auto",
-            *[
-                item.value
-                for item in SourceFormat
-            ],
+            *[item.value for item in SourceFormat],
         ]
 
         raise ConfigError(
-            f"{field_name} 无效: {value!r}；"
-            f"允许值: {', '.join(allowed)}"
+            f"{field_name} 无效: {value!r}；允许值: {', '.join(allowed)}"
         ) from exc
 
 
@@ -360,56 +311,36 @@ def _parse_source_format(
 # Defaults
 # ============================================================
 
+
 def parse_defaults(
     raw: dict[str, Any],
 ) -> DefaultConfig:
     return DefaultConfig(
         output_mode=_parse_output_mode(
-            raw.get(
-                "output_mode"
-            ),
+            raw.get("output_mode"),
             default=OutputMode.STRICT,
-            field_name=(
-                "defaults.output_mode"
-            ),
+            field_name=("defaults.output_mode"),
         ),
         optimize_mode=_parse_optimize_mode(
-            raw.get(
-                "optimize_mode"
-            ),
+            raw.get("optimize_mode"),
             default=OptimizeMode.SAFE,
-            field_name=(
-                "defaults.optimize_mode"
-            ),
+            field_name=("defaults.optimize_mode"),
         ),
         sort_output=_as_bool(
-            raw.get(
-                "sort_output"
-            ),
+            raw.get("sort_output"),
             default=True,
-            field_name=(
-                "defaults.sort_output"
-            ),
+            field_name=("defaults.sort_output"),
         ),
         timeout=_as_int(
-            raw.get(
-                "timeout"
-            ),
+            raw.get("timeout"),
             default=30,
             minimum=1,
-            field_name=(
-                "defaults.timeout"
-            ),
+            field_name=("defaults.timeout"),
         ),
         continue_on_source_error=_as_bool(
-            raw.get(
-                "continue_on_source_error"
-            ),
+            raw.get("continue_on_source_error"),
             default=True,
-            field_name=(
-                "defaults."
-                "continue_on_source_error"
-            ),
+            field_name=("defaults.continue_on_source_error"),
         ),
     )
 
@@ -417,6 +348,7 @@ def parse_defaults(
 # ============================================================
 # Source
 # ============================================================
+
 
 def parse_source(
     raw: dict[str, Any],
@@ -426,34 +358,23 @@ def parse_source(
     group_timeout: int,
 ) -> SourceConfig:
 
-    prefix = (
-        f"groups.{group_name}."
-        f"sources[{index}]"
-    )
+    prefix = f"groups.{group_name}.sources[{index}]"
 
     name = _as_string(
-        raw.get(
-            "name"
-        ),
+        raw.get("name"),
         field_name=f"{prefix}.name",
     )
 
     if not name:
-        raise ConfigError(
-            f"{prefix}.name 不能为空"
-        )
+        raise ConfigError(f"{prefix}.name 不能为空")
 
     url = _as_string(
-        raw.get(
-            "url"
-        ),
+        raw.get("url"),
         field_name=f"{prefix}.url",
     )
 
     if not url:
-        raise ConfigError(
-            f"{prefix}.url 不能为空"
-        )
+        raise ConfigError(f"{prefix}.url 不能为空")
 
     if not url.startswith(
         (
@@ -461,31 +382,20 @@ def parse_source(
             "https://",
         )
     ):
-        raise ConfigError(
-            f"{prefix}.url 必须是 "
-            "http:// 或 https:// 地址"
-        )
+        raise ConfigError(f"{prefix}.url 必须是 http:// 或 https:// 地址")
 
     enabled = _as_bool(
-        raw.get(
-            "enabled"
-        ),
+        raw.get("enabled"),
         default=True,
         field_name=f"{prefix}.enabled",
     )
 
-    source_format = (
-        _parse_source_format(
-            raw.get(
-                "format"
-            ),
-            field_name=f"{prefix}.format",
-        )
+    source_format = _parse_source_format(
+        raw.get("format"),
+        field_name=f"{prefix}.format",
     )
 
-    timeout_raw = raw.get(
-        "timeout"
-    )
+    timeout_raw = raw.get("timeout")
 
     if timeout_raw is None:
         timeout = None
@@ -508,29 +418,19 @@ def parse_source(
     }
 
     metadata_raw = _require_mapping(
-        raw.get(
-            "metadata"
-        ),
+        raw.get("metadata"),
         field_name=f"{prefix}.metadata",
     )
 
     # 未知字段先保留下来。
     # 这样以后扩展 source 配置时，
     # 不会立刻破坏旧 loader。
-    metadata = dict(
-        metadata_raw
-    )
+    metadata = dict(metadata_raw)
 
-    extra = {
-        key: value
-        for key, value in raw.items()
-        if key not in known_keys
-    }
+    extra = {key: value for key, value in raw.items() if key not in known_keys}
 
     if extra:
-        metadata[
-            "_extra"
-        ] = extra
+        metadata["_extra"] = extra
 
     return SourceConfig(
         name=name,
@@ -546,6 +446,7 @@ def parse_source(
 # Group
 # ============================================================
 
+
 def parse_group(
     name: str,
     raw: dict[str, Any],
@@ -553,121 +454,76 @@ def parse_group(
     defaults: DefaultConfig,
 ) -> GroupConfig:
 
-    prefix = (
-        f"groups.{name}"
-    )
+    prefix = f"groups.{name}"
 
     enabled = _as_bool(
-        raw.get(
-            "enabled"
-        ),
+        raw.get("enabled"),
         default=True,
         field_name=f"{prefix}.enabled",
     )
 
     output = _as_string(
-        raw.get(
-            "output"
-        ),
+        raw.get("output"),
         default=f"rules/{name}.yaml",
         field_name=f"{prefix}.output",
     )
 
     report = _as_string(
-        raw.get(
-            "report"
-        ),
+        raw.get("report"),
         default=f"reports/{name}.json",
         field_name=f"{prefix}.report",
     )
 
     if not output:
-        raise ConfigError(
-            f"{prefix}.output 不能为空"
-        )
+        raise ConfigError(f"{prefix}.output 不能为空")
 
     if not report:
-        raise ConfigError(
-            f"{prefix}.report 不能为空"
-        )
+        raise ConfigError(f"{prefix}.report 不能为空")
 
     output_mode = _parse_output_mode(
-        raw.get(
-            "output_mode"
-        ),
+        raw.get("output_mode"),
         default=defaults.output_mode,
-        field_name=(
-            f"{prefix}.output_mode"
-        ),
+        field_name=(f"{prefix}.output_mode"),
     )
 
     optimize_mode = _parse_optimize_mode(
-        raw.get(
-            "optimize_mode"
-        ),
+        raw.get("optimize_mode"),
         default=defaults.optimize_mode,
-        field_name=(
-            f"{prefix}.optimize_mode"
-        ),
+        field_name=(f"{prefix}.optimize_mode"),
     )
 
     sort_output = _as_bool(
-        raw.get(
-            "sort_output"
-        ),
+        raw.get("sort_output"),
         default=defaults.sort_output,
-        field_name=(
-            f"{prefix}.sort_output"
-        ),
+        field_name=(f"{prefix}.sort_output"),
     )
 
     timeout = _as_int(
-        raw.get(
-            "timeout"
-        ),
+        raw.get("timeout"),
         default=defaults.timeout,
         minimum=1,
         field_name=f"{prefix}.timeout",
     )
 
-    continue_on_source_error = (
-        _as_bool(
-            raw.get(
-                "continue_on_source_error"
-            ),
-            default=(
-                defaults.
-                continue_on_source_error
-            ),
-            field_name=(
-                f"{prefix}."
-                "continue_on_source_error"
-            ),
-        )
+    continue_on_source_error = _as_bool(
+        raw.get("continue_on_source_error"),
+        default=(defaults.continue_on_source_error),
+        field_name=(f"{prefix}.continue_on_source_error"),
     )
 
     raw_sources = _require_list(
-        raw.get(
-            "sources"
-        ),
+        raw.get("sources"),
         field_name=f"{prefix}.sources",
     )
 
-    sources: list[
-        SourceConfig
-    ] = []
+    sources: list[SourceConfig] = []
 
-    for index, source_raw in enumerate(
-        raw_sources
-    ):
+    for index, source_raw in enumerate(raw_sources):
         if not isinstance(
             source_raw,
             dict,
         ):
-            raise ConfigError(
-                f"{prefix}.sources[{index}] "
-                "必须是对象/map"
-            )
+            raise ConfigError(f"{prefix}.sources[{index}] 必须是对象/map")
 
         sources.append(
             parse_source(
@@ -692,28 +548,16 @@ def parse_group(
     }
 
     metadata_raw = _require_mapping(
-        raw.get(
-            "metadata"
-        ),
-        field_name=(
-            f"{prefix}.metadata"
-        ),
+        raw.get("metadata"),
+        field_name=(f"{prefix}.metadata"),
     )
 
-    metadata = dict(
-        metadata_raw
-    )
+    metadata = dict(metadata_raw)
 
-    extra = {
-        key: value
-        for key, value in raw.items()
-        if key not in known_keys
-    }
+    extra = {key: value for key, value in raw.items() if key not in known_keys}
 
     if extra:
-        metadata[
-            "_extra"
-        ] = extra
+        metadata["_extra"] = extra
 
     return GroupConfig(
         name=name,
@@ -725,9 +569,7 @@ def parse_group(
         optimize_mode=optimize_mode,
         sort_output=sort_output,
         timeout=timeout,
-        continue_on_source_error=(
-            continue_on_source_error
-        ),
+        continue_on_source_error=(continue_on_source_error),
         metadata=metadata,
     )
 
@@ -735,6 +577,7 @@ def parse_group(
 # ============================================================
 # 主解析
 # ============================================================
+
 
 def parse_config(
     data: dict[str, Any],
@@ -746,9 +589,7 @@ def parse_config(
         data,
         dict,
     ):
-        raise ConfigError(
-            "配置文件根节点必须是对象/map"
-        )
+        raise ConfigError("配置文件根节点必须是对象/map")
 
     version = data.get(
         "version",
@@ -759,75 +600,47 @@ def parse_config(
         version,
         int,
     ):
-        raise ConfigError(
-            "version 必须是整数"
-        )
+        raise ConfigError("version 必须是整数")
 
     if version != 1:
-        raise ConfigError(
-            f"不支持的配置版本: {version}"
-        )
+        raise ConfigError(f"不支持的配置版本: {version}")
 
     defaults_raw = _require_mapping(
-        data.get(
-            "defaults"
-        ),
+        data.get("defaults"),
         field_name="defaults",
     )
 
-    defaults = parse_defaults(
-        defaults_raw
-    )
+    defaults = parse_defaults(defaults_raw)
 
     groups_raw = _require_mapping(
-        data.get(
-            "groups"
-        ),
+        data.get("groups"),
         field_name="groups",
     )
 
-    groups: dict[
-        str,
-        GroupConfig
-    ] = {}
+    groups: dict[str, GroupConfig] = {}
 
-    for group_name, group_raw in (
-        groups_raw.items()
-    ):
+    for group_name, group_raw in groups_raw.items():
         if not isinstance(
             group_name,
             str,
         ):
-            raise ConfigError(
-                "groups 的名称必须是字符串"
-            )
+            raise ConfigError("groups 的名称必须是字符串")
 
-        group_name = (
-            group_name.strip()
-        )
+        group_name = group_name.strip()
 
         if not group_name:
-            raise ConfigError(
-                "group 名称不能为空"
-            )
+            raise ConfigError("group 名称不能为空")
 
         if not isinstance(
             group_raw,
             dict,
         ):
-            raise ConfigError(
-                f"groups.{group_name} "
-                "必须是对象/map"
-            )
+            raise ConfigError(f"groups.{group_name} 必须是对象/map")
 
         if group_name in groups:
-            raise ConfigError(
-                f"重复 group: {group_name}"
-            )
+            raise ConfigError(f"重复 group: {group_name}")
 
-        groups[
-            group_name
-        ] = parse_group(
+        groups[group_name] = parse_group(
             group_name,
             group_raw,
             defaults=defaults,
@@ -845,45 +658,30 @@ def parse_config(
 # 文件读取
 # ============================================================
 
+
 def load_config(
-    path: str | Path = (
-        "config/sources.yaml"
-    ),
+    path: str | Path = ("config/sources.yaml"),
 ) -> AppConfig:
 
-    path = Path(
-        path
-    )
+    path = Path(path)
 
     if not path.exists():
-        raise FileNotFoundError(
-            f"配置文件不存在: {path}"
-        )
+        raise FileNotFoundError(f"配置文件不存在: {path}")
 
     if not path.is_file():
-        raise ConfigError(
-            f"配置路径不是文件: {path}"
-        )
+        raise ConfigError(f"配置路径不是文件: {path}")
 
     try:
-        raw_text = path.read_text(
-            encoding="utf-8-sig"
-        )
+        raw_text = path.read_text(encoding="utf-8-sig")
 
     except OSError as exc:
-        raise ConfigError(
-            f"无法读取配置文件: {path}"
-        ) from exc
+        raise ConfigError(f"无法读取配置文件: {path}") from exc
 
     try:
-        data = yaml.safe_load(
-            raw_text
-        )
+        data = yaml.safe_load(raw_text)
 
     except yaml.YAMLError as exc:
-        raise ConfigError(
-            f"YAML 解析失败: {exc}"
-        ) from exc
+        raise ConfigError(f"YAML 解析失败: {exc}") from exc
 
     if data is None:
         data = {}
@@ -898,17 +696,14 @@ def load_config(
 # 查询辅助
 # ============================================================
 
+
 def enabled_groups(
     config: AppConfig,
 ) -> list[GroupConfig]:
     """
     获取 enabled=true 的组。
     """
-    return [
-        group
-        for group in config.groups.values()
-        if group.enabled
-    ]
+    return [group for group in config.groups.values() if group.enabled]
 
 
 def enabled_sources(
@@ -917,11 +712,7 @@ def enabled_sources(
     """
     获取组内 enabled=true 的源。
     """
-    return [
-        source
-        for source in group.sources
-        if source.enabled
-    ]
+    return [source for source in group.sources if source.enabled]
 
 
 def get_group(
@@ -933,92 +724,47 @@ def get_group(
     """
 
     try:
-        return config.groups[
-            name
-        ]
+        return config.groups[name]
 
     except KeyError as exc:
-        raise ConfigError(
-            f"找不到 group: {name}"
-        ) from exc
+        raise ConfigError(f"找不到 group: {name}") from exc
 
 
 # ============================================================
 # 配置摘要
 # ============================================================
 
+
 def config_summary(
     config: AppConfig,
 ) -> str:
 
-    groups = list(
-        config.groups.values()
-    )
+    groups = list(config.groups.values())
 
-    enabled_group_list = [
-        group
-        for group in groups
-        if group.enabled
-    ]
+    enabled_group_list = [group for group in groups if group.enabled]
 
-    source_count = sum(
-        len(group.sources)
-        for group in groups
-    )
+    source_count = sum(len(group.sources) for group in groups)
 
     enabled_source_count = sum(
-        len(
-            enabled_sources(
-                group
-            )
-        )
-        for group in enabled_group_list
+        len(enabled_sources(group)) for group in enabled_group_list
     )
 
     lines = [
         "=== Config Summary ===",
-        (
-            "version: "
-            f"{config.version}"
-        ),
-        (
-            "groups: "
-            f"{len(groups)}"
-        ),
-        (
-            "enabled groups: "
-            f"{len(enabled_group_list)}"
-        ),
-        (
-            "sources: "
-            f"{source_count}"
-        ),
-        (
-            "enabled sources: "
-            f"{enabled_source_count}"
-        ),
+        (f"version: {config.version}"),
+        (f"groups: {len(groups)}"),
+        (f"enabled groups: {len(enabled_group_list)}"),
+        (f"sources: {source_count}"),
+        (f"enabled sources: {enabled_source_count}"),
     ]
 
     for group in groups:
-        status = (
-            "enabled"
-            if group.enabled
-            else "disabled"
-        )
+        status = "enabled" if group.enabled else "disabled"
 
-        source_enabled = len(
-            enabled_sources(
-                group
-            )
-        )
+        source_enabled = len(enabled_sources(group))
 
         lines.append(
-            f"- {group.name}: "
-            f"{status}, "
-            f"{source_enabled}/"
-            f"{len(group.sources)} sources"
+            f"- {group.name}: {status}, {source_enabled}/{len(group.sources)} sources"
         )
 
-    return "\n".join(
-        lines
-    )
+    return "\n".join(lines)

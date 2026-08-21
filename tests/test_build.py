@@ -6,9 +6,7 @@ def test_full_build_pipeline():
 
     config = load_config()
 
-    result = run_pipeline(
-        config
-    )
+    result = run_pipeline(config)
 
     assert result.success
 

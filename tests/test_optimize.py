@@ -49,7 +49,4 @@ def test_optimize_keep_cidr_rules():
     )
 
     assert len(result.rules) >= 1
-    assert any(
-        r.value == "10.0.0.0/8"
-        for r in result.rules
-    )
+    assert any(r.value == "10.0.0.0/8" for r in result.rules)

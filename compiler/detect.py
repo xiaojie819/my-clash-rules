@@ -18,32 +18,23 @@ RULE_TYPES = {
     "DOMAIN-KEYWORD",
     "DOMAIN-WILDCARD",
     "DOMAIN-REGEX",
-
     "IP-CIDR",
     "IP-CIDR6",
     "SRC-IP-CIDR",
     "SRC-IP-CIDR6",
-
     "PROCESS-NAME",
     "PROCESS-PATH",
-
     "DST-PORT",
     "SRC-PORT",
-
     "NETWORK",
-
     "GEOIP",
     "GEOSITE",
-
     "RULE-SET",
     "RULESET",
-
     "URL-REGEX",
-
     "AND",
     "OR",
     "NOT",
-
     "MATCH",
     "FINAL",
 }
@@ -78,6 +69,7 @@ class DetectionResult:
 # 基础文本工具
 # ============================================================
 
+
 def normalize_text(text: str) -> str:
     """
     统一换行、去 BOM。
@@ -87,11 +79,7 @@ def normalize_text(text: str) -> str:
 
     text = text.lstrip("\ufeff")
 
-    return (
-        text
-        .replace("\r\n", "\n")
-        .replace("\r", "\n")
-    )
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def iter_meaningful_lines(text: str) -> Iterable[str]:
@@ -135,16 +123,10 @@ def strip_quotes(value: str) -> str:
     value = value.strip()
 
     if len(value) >= 2:
-        if (
-            value.startswith('"')
-            and value.endswith('"')
-        ):
+        if value.startswith('"') and value.endswith('"'):
             return value[1:-1].strip()
 
-        if (
-            value.startswith("'")
-            and value.endswith("'")
-        ):
+        if value.startswith("'") and value.endswith("'"):
             return value[1:-1].strip()
 
     return value
@@ -153,6 +135,7 @@ def strip_quotes(value: str) -> str:
 # ============================================================
 # 单行类型识别
 # ============================================================
+
 
 def looks_like_classical_rule(line: str) -> bool:
     """
@@ -268,6 +251,7 @@ def looks_like_ip(value: str) -> bool:
 # 格式特征
 # ============================================================
 
+
 def has_yaml_payload(text: str) -> bool:
     """
     是否存在 YAML:
@@ -305,9 +289,7 @@ def has_yaml_behavior(text: str) -> str | None:
         flags=re.IGNORECASE | re.MULTILINE,
     )
 
-    match = pattern.search(
-        normalize_text(text)
-    )
+    match = pattern.search(normalize_text(text))
 
     if not match:
         return None
@@ -347,9 +329,7 @@ def looks_like_yaml_document(text: str) -> bool:
     不引入 PyYAML。
     真正 YAML 解析以后放 parsers.py。
     """
-    meaningful = list(
-        iter_meaningful_lines(text)
-    )
+    meaningful = list(iter_meaningful_lines(text))
 
     if not meaningful:
         return False
@@ -369,6 +349,7 @@ def looks_like_yaml_document(text: str) -> bool:
 # ============================================================
 # 主检测
 # ============================================================
+
 
 def detect_format(text: str) -> DetectionResult:
     """
@@ -450,9 +431,7 @@ def detect_format(text: str) -> DetectionResult:
     yaml_list_count = 0
 
     for line in lines:
-        clean = strip_quotes(
-            strip_yaml_list_prefix(line)
-        )
+        clean = strip_quotes(strip_yaml_list_prefix(line))
 
         if line.startswith("- "):
             yaml_list_count += 1
@@ -488,24 +467,17 @@ def detect_format(text: str) -> DetectionResult:
         1,
     )
 
-    classical_ratio = (
-        classical_count / total
-    )
+    classical_ratio = classical_count / total
 
-    domain_ratio = (
-        domain_count / total
-    )
+    domain_ratio = domain_count / total
 
-    cidr_ratio = (
-        cidr_count / total
-    )
+    cidr_ratio = cidr_count / total
 
     # --------------------------------------------------------
     # 4. payload YAML
     # --------------------------------------------------------
 
     if has_yaml_payload(text):
-
         # classical payload
         if classical_count > 0:
             return DetectionResult(
@@ -535,9 +507,7 @@ def detect_format(text: str) -> DetectionResult:
                         0.85 + cidr_ratio * 0.15,
                     ),
                 ),
-                reason=(
-                    "检测到 payload:，内容主要为裸 CIDR"
-                ),
+                reason=("检测到 payload:，内容主要为裸 CIDR"),
                 features=features,
             )
 
@@ -552,9 +522,7 @@ def detect_format(text: str) -> DetectionResult:
                         0.85 + domain_ratio * 0.15,
                     ),
                 ),
-                reason=(
-                    "检测到 payload:，内容主要为裸域名"
-                ),
+                reason=("检测到 payload:，内容主要为裸域名"),
                 features=features,
             )
 
@@ -562,10 +530,7 @@ def detect_format(text: str) -> DetectionResult:
         return DetectionResult(
             format=SourceFormat.YAML,
             confidence=0.7,
-            reason=(
-                "检测到 payload: YAML，但内容无法明确判断 "
-                "classical/domain/ipcidr"
-            ),
+            reason=("检测到 payload: YAML，但内容无法明确判断 classical/domain/ipcidr"),
             features=features,
         )
 
@@ -583,19 +548,14 @@ def detect_format(text: str) -> DetectionResult:
                     0.95,
                     0.75 + classical_ratio * 0.2,
                 ),
-                reason=(
-                    "多数有效行符合 TYPE,value 格式，"
-                    "判定为 Surge/兼容 list 风格"
-                ),
+                reason=("多数有效行符合 TYPE,value 格式，判定为 Surge/兼容 list 风格"),
                 features=features,
             )
 
         return DetectionResult(
             format=SourceFormat.MIXED_TEXT,
             confidence=0.75,
-            reason=(
-                "存在 classical 风格规则，但文件同时包含大量其他内容"
-            ),
+            reason=("存在 classical 风格规则，但文件同时包含大量其他内容"),
             features=features,
         )
 
@@ -604,30 +564,30 @@ def detect_format(text: str) -> DetectionResult:
     # --------------------------------------------------------
 
     if cidr_count > 0 and cidr_ratio >= 0.7:
-            return DetectionResult(
-                format=SourceFormat.PLAIN_CIDR,
-                confidence=min(
-                    0.98,
-                    0.8 + cidr_ratio * 0.18,
-                ),
-                reason="多数有效行是 IPv4/IPv6 CIDR",
-                features=features,
-            )
+        return DetectionResult(
+            format=SourceFormat.PLAIN_CIDR,
+            confidence=min(
+                0.98,
+                0.8 + cidr_ratio * 0.18,
+            ),
+            reason="多数有效行是 IPv4/IPv6 CIDR",
+            features=features,
+        )
 
     # --------------------------------------------------------
     # 7. 纯域名
     # --------------------------------------------------------
 
     if domain_count > 0 and domain_ratio >= 0.7:
-            return DetectionResult(
-                format=SourceFormat.PLAIN_DOMAIN,
-                confidence=min(
-                    0.98,
-                    0.8 + domain_ratio * 0.18,
-                ),
-                reason="多数有效行是裸域名",
-                features=features,
-            )
+        return DetectionResult(
+            format=SourceFormat.PLAIN_DOMAIN,
+            confidence=min(
+                0.98,
+                0.8 + domain_ratio * 0.18,
+            ),
+            reason="多数有效行是裸域名",
+            features=features,
+        )
 
     # --------------------------------------------------------
     # 8. 普通 YAML
@@ -637,9 +597,7 @@ def detect_format(text: str) -> DetectionResult:
         return DetectionResult(
             format=SourceFormat.YAML,
             confidence=0.65,
-            reason=(
-                "内容具有 YAML 键值结构，但未识别为标准 Clash provider"
-            ),
+            reason=("内容具有 YAML 键值结构，但未识别为标准 Clash provider"),
             features=features,
         )
 
@@ -647,18 +605,11 @@ def detect_format(text: str) -> DetectionResult:
     # 9. 混合文本
     # --------------------------------------------------------
 
-    if (
-        classical_count
-        or domain_count
-        or cidr_count
-        or ip_count
-    ):
+    if classical_count or domain_count or cidr_count or ip_count:
         return DetectionResult(
             format=SourceFormat.MIXED_TEXT,
             confidence=0.6,
-            reason=(
-                "检测到部分规则特征，但整体格式混合"
-            ),
+            reason=("检测到部分规则特征，但整体格式混合"),
             features=features,
         )
 
@@ -673,6 +624,7 @@ def detect_format(text: str) -> DetectionResult:
 # ============================================================
 # 辅助接口
 # ============================================================
+
 
 def detect_source_format(text: str) -> SourceFormat:
     """
@@ -698,11 +650,7 @@ def explain_detection(text: str) -> str:
         "features:",
     ]
 
-    for key, value in sorted(
-        result.features.items()
-    ):
-        lines.append(
-            f"  - {key}: {value}"
-        )
+    for key, value in sorted(result.features.items()):
+        lines.append(f"  - {key}: {value}")
 
     return "\n".join(lines)

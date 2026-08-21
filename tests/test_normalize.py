@@ -12,9 +12,7 @@ def test_normalize_domain_rule():
         )
     ]
 
-    normalized, issues = normalize_rules(
-        rules
-    )
+    normalized, issues = normalize_rules(rules)
 
     assert len(issues) == 0
     assert len(normalized) == 1
@@ -31,9 +29,7 @@ def test_normalize_cidr_rule():
         )
     ]
 
-    normalized, issues = normalize_rules(
-        rules
-    )
+    normalized, issues = normalize_rules(rules)
 
     assert len(issues) == 0
     assert normalized[0].value == "192.168.1.0/24"

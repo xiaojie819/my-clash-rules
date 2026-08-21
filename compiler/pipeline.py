@@ -31,40 +31,26 @@ from .sanitize import sanitize_text
 
 @dataclass(slots=True)
 class SourceBuildResult:
-
     name: str
 
     success: bool
 
-    rules: list[Rule] = field(
-        default_factory=list
-    )
+    rules: list[Rule] = field(default_factory=list)
 
-    issues: list[ParseIssue] = field(
-        default_factory=list
-    )
+    issues: list[ParseIssue] = field(default_factory=list)
 
 
 @dataclass(slots=True)
 class GroupBuildResult:
-
     name: str
 
     success: bool
 
-    rules: list[Rule] = field(
-        default_factory=list
-    )
+    rules: list[Rule] = field(default_factory=list)
 
-    issues: list[ParseIssue] = field(
-        default_factory=list
-    )
+    issues: list[ParseIssue] = field(default_factory=list)
 
-    source_results: list[
-        SourceBuildResult
-    ] = field(
-        default_factory=list
-    )
+    source_results: list[SourceBuildResult] = field(default_factory=list)
 
     output: Path | None = None
 
@@ -73,14 +59,9 @@ class GroupBuildResult:
 
 @dataclass(slots=True)
 class PipelineResult:
-
     success: bool
 
-    groups: list[
-        GroupBuildResult
-    ] = field(
-        default_factory=list
-    )
+    groups: list[GroupBuildResult] = field(default_factory=list)
 
 
 # ============================================================
@@ -100,18 +81,12 @@ def build_single_source(
     )
 
     try:
-
         text = fetch_url_text(
             source.url,
-            timeout=(
-                source.timeout
-                or group.timeout
-            ),
+            timeout=(source.timeout or group.timeout),
         )
 
-        sanitize_result = sanitize_text(
-            text
-        )
+        sanitize_result = sanitize_text(text)
 
         text = sanitize_result.text
 
@@ -120,58 +95,35 @@ def build_single_source(
             url=source.url,
         )
 
-
         parsed = parse_rules(
             text,
             source=rule_source,
-            format_hint=(
-                source.format
-            ),
+            format_hint=(source.format),
         )
 
+        normalized_rules, normalize_issues = normalize_rules(parsed.rules)
 
-        normalized_rules, normalize_issues = (
-            normalize_rules(
-                parsed.rules
-            )
-        )
+        result.rules = normalized_rules
 
+        result.issues.extend(parsed.issues)
 
-        result.rules = (
-            normalized_rules
-        )
-
-
-        result.issues.extend(
-            parsed.issues
-        )
-
-        result.issues.extend(
-            normalize_issues
-        )
-
+        result.issues.extend(normalize_issues)
 
         result.success = True
-
 
     except (
         OSError,
         ValueError,
         RuntimeError,
     ) as exc:
-
         result.issues.append(
             ParseIssue(
-                message=(
-                    f"源 {source.name} "
-                    f"构建失败: {exc}"
-                ),
+                message=(f"源 {source.name} 构建失败: {exc}"),
                 level="error",
             )
         )
 
     return result
-
 
 
 # ============================================================
@@ -183,83 +135,53 @@ def build_group(
     group: GroupConfig,
 ) -> GroupBuildResult:
 
-
     result = GroupBuildResult(
         name=group.name,
         success=False,
     )
 
-
     all_rules: list[Rule] = []
-
 
     # --------------------------------------------------------
     # 1. 下载所有 source
     # --------------------------------------------------------
 
-    for source in enabled_sources(
-        group
-    ):
-
-        source_result = (
-            build_single_source(
-                source,
-                group=group,
-            )
+    for source in enabled_sources(group):
+        source_result = build_single_source(
+            source,
+            group=group,
         )
 
+        result.source_results.append(source_result)
 
-        result.source_results.append(
-            source_result
-        )
-
-
-        result.issues.extend(
-            source_result.issues
-        )
-
+        result.issues.extend(source_result.issues)
 
         if source_result.success:
-
-            all_rules.extend(
-                source_result.rules
-            )
-
+            all_rules.extend(source_result.rules)
 
         elif not group.continue_on_source_error:
-
             result.issues.append(
                 ParseIssue(
-                    message=(
-                        "源失败，"
-                        "根据配置终止 group"
-                    ),
+                    message=("源失败，根据配置终止 group"),
                     level="error",
                 )
             )
 
             return result
 
-
-
     # --------------------------------------------------------
     # 没有规则
     # --------------------------------------------------------
 
     if not all_rules:
-
         result.issues.append(
             ParseIssue(
-                message=(
-                    "group 没有成功生成任何规则"
-                ),
+                message=("group 没有成功生成任何规则"),
                 level="error",
             )
         )
 
         return result
-
-
 
     # --------------------------------------------------------
     # 2. 全局 normalize
@@ -270,17 +192,9 @@ def build_group(
     # 全局阶段保证合并后的最终一致。
     # --------------------------------------------------------
 
-    normalized_rules, normalize_issues = (
-        normalize_rules(
-            all_rules
-        )
-    )
+    normalized_rules, normalize_issues = normalize_rules(all_rules)
 
-    result.issues.extend(
-        normalize_issues
-    )
-
-
+    result.issues.extend(normalize_issues)
 
     # --------------------------------------------------------
     # 3. 全局 optimize
@@ -289,163 +203,90 @@ def build_group(
     optimized = optimize_rules(
         normalized_rules,
         mode=group.optimize_mode,
-        sort_output=(
-            group.sort_output
-        ),
+        sort_output=(group.sort_output),
     )
 
+    result.rules = optimized.rules
 
-    result.rules = (
-        optimized.rules
-    )
-
-
-    result.issues.extend(
-        optimized.issues
-    )
-
+    result.issues.extend(optimized.issues)
 
     # --------------------------------------------------------
     # 4. 写输出
     # --------------------------------------------------------
 
-    output_path = Path(
-        group.output
-    )
-
+    output_path = Path(group.output)
 
     output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-
     content = render_classical_yaml(
         result.rules,
         header_comments=[
-            (
-                "Generated by "
-                "universal rule compiler"
-            ),
-            (
-                f"Group: {group.name}"
-            ),
-            (
-                f"Sources: "
-                f"{len(result.source_results)}"
-            ),
-            (
-                f"Rules: "
-                f"{len(result.rules)}"
-            ),
+            ("Generated by universal rule compiler"),
+            (f"Group: {group.name}"),
+            (f"Sources: {len(result.source_results)}"),
+            (f"Rules: {len(result.rules)}"),
         ],
     )
-
 
     output_path.write_text(
         content,
         encoding="utf-8",
     )
 
-
-    result.output = (
-        output_path
-    )
-
+    result.output = output_path
 
     # --------------------------------------------------------
     # 5. 写报告
     # --------------------------------------------------------
 
-    report_path = Path(
-        group.report
-    )
+    report_path = Path(group.report)
 
     report_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-
     report_data = {
-
         "group": group.name,
-
         "success": True,
-
-        "rule_count": (
-            len(result.rules)
-        ),
-
+        "rule_count": (len(result.rules)),
         "sources": [
-
             {
-                "name":
-                    item.name,
-
-                "success":
-                    item.success,
-
-                "rules":
-                    len(item.rules),
-
-                "issues":
-                    [
-                        issue.message
-                        for issue
-                        in item.issues
-                    ],
+                "name": item.name,
+                "success": item.success,
+                "rules": len(item.rules),
+                "issues": [issue.message for issue in item.issues],
             }
-
-            for item
-            in result.source_results
-
+            for item in result.source_results
         ],
-
         "issues": [
-
             {
-                "level":
-                    issue.level,
-
-                "message":
-                    issue.message,
-
+                "level": issue.level,
+                "message": issue.message,
             }
-
-            for issue
-            in result.issues
-
+            for issue in result.issues
         ],
-
     }
-
 
     import json
 
-
     report_path.write_text(
-
         json.dumps(
             report_data,
             ensure_ascii=False,
             indent=2,
         ),
-
         encoding="utf-8",
     )
 
-
-    result.report = (
-        report_path
-    )
-
+    result.report = report_path
 
     result.success = True
 
-
     return result
-
 
 
 # ============================================================
@@ -457,35 +298,19 @@ def run_pipeline(
     config: AppConfig,
 ) -> PipelineResult:
 
-
     pipeline_result = PipelineResult(
         success=True,
     )
 
+    for group in enabled_groups(config):
+        result = build_group(group)
 
-    for group in enabled_groups(
-        config
-    ):
-
-        result = build_group(
-            group
-        )
-
-
-        pipeline_result.groups.append(
-            result
-        )
-
+        pipeline_result.groups.append(result)
 
         if not result.success:
-
-            pipeline_result.success = (
-                False
-            )
-
+            pipeline_result.success = False
 
     return pipeline_result
-
 
 
 # ============================================================
@@ -497,32 +322,16 @@ def pipeline_summary(
     result: PipelineResult,
 ) -> str:
 
-
     lines = [
-
         "=== Pipeline Summary ===",
-
-        (
-            "success: "
-            f"{result.success}"
-        ),
-
+        (f"success: {result.success}"),
     ]
 
-
     for group in result.groups:
-
         lines.append(
-
-            
-                f"- {group.name}: "
-                f"{'OK' if group.success else 'FAIL'} "
-                f"rules={len(group.rules)}"
-            
-
+            f"- {group.name}: "
+            f"{'OK' if group.success else 'FAIL'} "
+            f"rules={len(group.rules)}"
         )
 
-
-    return "\n".join(
-        lines
-    )
+    return "\n".join(lines)
