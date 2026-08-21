@@ -9,6 +9,7 @@ import yaml
 from .build import OutputMode
 from .models import SourceFormat
 from .optimize import OptimizeMode
+from .semantic import infer_intent
 
 # ============================================================
 # 异常
@@ -44,6 +45,10 @@ class SourceConfig:
     name: str
 
     url: str
+
+    # source 默认语义：
+    # proxy / direct / reject / unknown
+    intent: str = "unknown"
 
     enabled: bool = True
 
@@ -434,6 +439,14 @@ def parse_source(
 
     return SourceConfig(
         name=name,
+        intent=infer_intent(
+            name=name,
+            url=url,
+            current=_as_string(
+                raw.get("intent"),
+                field_name=f"{prefix}.intent",
+            ) or "unknown",
+        ),
         url=url,
         enabled=enabled,
         format=source_format,

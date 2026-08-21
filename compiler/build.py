@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .detect import detect_format
 from .fetcher import fetch_url_text
+from .extractor import extract_rules
 from .io import read_file_text
 from .models import (
     BuildStats,
@@ -21,7 +22,6 @@ from .optimize import (
     OptimizeResult,
     optimize_rules,
 )
-from .parsers import parse_rules
 from .renderer import render_classical_yaml
 
 # ============================================================
@@ -280,7 +280,7 @@ def compile_text(
     # 2. Parse
     # --------------------------------------------------------
 
-    parsed = parse_rules(
+    parsed = extract_rules(
         text,
         source=source,
         format_hint=detected_format,

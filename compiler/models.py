@@ -25,6 +25,7 @@ class RuleType(str, Enum):
 
     IP_CIDR = "IP-CIDR"
     IP_CIDR6 = "IP-CIDR6"
+    IP_ASN = "IP-ASN"
 
     PROCESS_NAME = "PROCESS-NAME"
     PROCESS_PATH = "PROCESS-PATH"
@@ -84,6 +85,10 @@ class RuleSource:
 
     # 上游文件内的行号
     line_number: int | None = None
+
+    # 来源默认语义：
+    # proxy / direct / reject / unknown
+    intent: str = "unknown"
 
     # 额外元信息
     metadata: dict[str, Any] = field(default_factory=dict)

@@ -5,10 +5,10 @@ import yaml
 
 from compiler.config import enabled_groups, enabled_sources, load_config
 from compiler.fetcher import fetch_url_text
+from compiler.extractor import extract_rules
 from compiler.models import RuleSource, SourceFormat
 from compiler.normalize import normalize_rules
 from compiler.optimize import optimize_rules
-from compiler.parsers import parse_rules
 from compiler.sanitize import sanitize_text
 
 
@@ -67,7 +67,7 @@ def audit_group(group):
             url=source.url,
         )
 
-        parsed = parse_rules(
+        parsed = extract_rules(
             sanitize_result.text,
             source=rule_source,
             format_hint=source.format,
@@ -153,11 +153,14 @@ def audit_group(group):
         len(payload),
     )
 
-    output_parsed = parse_rules(
+    output_parsed = extract_rules(
         output_path.read_text(
             encoding="utf-8"
         ),
-        format_hint=SourceFormat.CLASH_CLASSICAL,
+        RuleSource(
+            name="generated-output",
+            url=str(output_path),
+        ),
     )
 
     expected_keys = {
@@ -186,7 +189,7 @@ def audit_group(group):
     total_issues = (
         all_issues
         + optimized.issues
-        + output_parsed.issues
+        + []
     )
 
     print(

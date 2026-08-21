@@ -32,6 +32,7 @@ RULE_TYPE_MAP: dict[str, RuleType] = {
     "DOMAIN-KEYWORD": RuleType.DOMAIN_KEYWORD,
     "IP-CIDR": RuleType.IP_CIDR,
     "IP-CIDR6": RuleType.IP_CIDR6,
+    "IP-ASN": RuleType.IP_ASN,
     "SRC-IP-CIDR": RuleType.SRC_IP_CIDR,
     "SRC-IP-CIDR6": RuleType.SRC_IP_CIDR6,
     "PROCESS-NAME": RuleType.PROCESS_NAME,
@@ -71,6 +72,7 @@ def _make_source(
         url=source.url,
         file=source.file,
         format=source.format,
+        intent=source.intent,
         line_number=line_number,
         metadata=dict(source.metadata),
     )
@@ -115,7 +117,7 @@ def _is_comment_or_empty(line: str) -> bool:
     return line.startswith(COMMENT_PREFIXES)
 
 
-def _normalize_domain_provider_value(value: str) -> tuple[RuleType, str]:
+def _parse_domain_provider_value(value: str) -> tuple[RuleType, str]:
     """
     Clash domain behavior 常见写法：
 
@@ -235,6 +237,7 @@ def parse_classical_rule_line(
             tags={"unsupported-type"},
             metadata={
                 "original_type": type_name,
+                "intent": source.intent if source else "unknown",
             },
         )
 
@@ -295,7 +298,7 @@ def parse_domain_line(
             ),
         )
 
-    rule_type, value = _normalize_domain_provider_value(clean)
+    rule_type, value = _parse_domain_provider_value(clean)
 
     return Rule(
         type=rule_type,

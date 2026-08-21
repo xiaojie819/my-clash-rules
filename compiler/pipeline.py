@@ -11,6 +11,7 @@ from .config import (
     enabled_sources,
 )
 from .fetcher import fetch_url_text
+from .extractor import extract_rules
 from .models import (
     ParseIssue,
     Rule,
@@ -20,7 +21,6 @@ from .normalize import normalize_rules
 from .optimize import (
     optimize_rules,
 )
-from .parsers import parse_rules
 from .renderer import render_classical_yaml
 from .sanitize import sanitize_text
 
@@ -93,12 +93,13 @@ def build_single_source(
         rule_source = RuleSource(
             name=source.name,
             url=source.url,
+            intent=source.intent,
         )
 
-        parsed = parse_rules(
+        parsed = extract_rules(
             text,
-            source=rule_source,
-            format_hint=(source.format),
+            rule_source,
+            format_hint=source.format,
         )
 
         normalized_rules, normalize_issues = normalize_rules(parsed.rules)

@@ -1,5 +1,5 @@
-from compiler.models import RuleType, SourceFormat
-from compiler.parsers import parse_rules
+from compiler.models import RuleSource, RuleType, SourceFormat
+from compiler.extractor import extract_rules
 
 
 def test_parse_classical_rules():
@@ -9,8 +9,9 @@ payload:
   - "IP-CIDR,192.168.1.0/24,no-resolve"
 """
 
-    result = parse_rules(
+    result = extract_rules(
         text,
+        RuleSource(name="test"),
         format_hint=SourceFormat.CLASH_CLASSICAL,
     )
 
